@@ -214,6 +214,17 @@ int nodeTraverse(TreeNode* node,
            nodeTraverse(node->right, cb, data, level + 1);
 }
 
+int nodeTraversePrefix(TreeNode* node,
+                       int cb(TreeNode* node, void* data, uint level),
+                       void* data, uint level) {
+	if (!node)
+        return OK;
+
+	return cb(node, data, level) ||
+           nodeTraversePrefix(node->left, cb, data, level + 1) ||
+           nodeTraversePrefix(node->right, cb, data, level + 1);
+}
+
 TreeStatus nodePrintPrefix(FILE* f, TreeNode* node) {
     if (!node)
         return InvalidParameters;
@@ -248,6 +259,22 @@ TreeStatus nodePrintPostfix(FILE* f, TreeNode* node) { /////
     fprintf(f, "%lf", node->data);
     fputc(')', f);
     return OK;
+}
+
+TreeNode* nodeCopy(TreeNode* src, TreeStatus* status) {
+    if (!src)
+        RETURN_WITH_STATUS(InvalidParameters, NULL);
+
+    TreeStatus returnedStatus = OK;
+    TreeNode* copy = nodeDynamicInit(src->type, src->data, NULL,
+                                     src->left  ? nodeCopy(src->left)  : NULL,
+                                     src->right ? nodeCopy(src->right) : NULL);
+    if (returnedStatus) {
+        nodeDestroy(copy, true);
+        RETURN_WITH_STATUS(returnedStatus, NULL);
+    }
+
+    return copy;
 }
 
 TreeStatus nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {

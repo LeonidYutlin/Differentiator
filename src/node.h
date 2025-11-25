@@ -47,11 +47,17 @@ TreeNode* nodeRead(FILE* file, TreeStatus* status = NULL, size_t* nodeCount = NU
 int nodeTraverse(TreeNode* node,
                  int callbackFunction(TreeNode* node, void* data, uint level),
                  void* data = NULL, uint level = 0);
-// copy-paste postfix and prefix traverses...
+int nodeTraversePrefix (TreeNode* node,
+                        int callbackFunction(TreeNode* node, void* data, uint level),
+                        void* data = NULL, uint level = 0);
+// copy-paste postfix traverses...
 
 TreeStatus nodePrintPrefix (FILE* file, TreeNode* node);
 TreeStatus nodePrintInfix  (FILE* file, TreeNode* node);
 TreeStatus nodePrintPostfix(FILE* file, TreeNode* node);
+
+///Note: doesnt copy the parent field and leaves it NULL instead
+TreeNode*  nodeCopy(TreeNode* srcNode, TreeStatus* status = NULL);
 
 TreeStatus nodeDelete(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
 

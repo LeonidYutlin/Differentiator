@@ -268,6 +268,13 @@ static bool compareParentPriority(TreeNode* node) {
     assert(node);
     OpType parentType = (OpType)node->parent->data;
     OpType ownType    = (OpType)node->data;
+    // fprintf(stderr,
+    //         "called to compare parent %s and child %s, the result is %d\n",
+    //         getOpTypeString(parentType), getOpTypeString(ownType),
+    //         ownType == OP_DIVIDE || parentType == OP_DIVIDE
+    //         ? false
+    //         : getOpTypePriority(parentType) > getOpTypePriority(ownType));
+
 
     return ownType == OP_DIVIDE || parentType == OP_DIVIDE
            ? false
