@@ -69,8 +69,32 @@ static int treeTextDump(FILE* f, TreeRoot* root,
 static int treeGraphDump(FILE* f, TreeRoot* root, uint callCount);
 static void declareNode(FILE* dot, TreeNode* node, bool bondFailed = false);
 static void executeDot(FILE* f, uint callCount, char* dotPath);
+static void nodeTexDumpTraverse(TreeNode* node, FILE* f);
+static bool compareParentPriority(TreeNode* node);
 
 #define WARNING_PREFIX(condition) condition ? "<b><body><font color=\"red\">[!]</font></body></b>" : ""
+
+void nodeTexDump(FILE* f, TreeNode* node) {
+    assert(f);
+
+    static uint callCount = 0;
+    ++callCount;
+
+    fprintf(f,
+            "(%u): \\\\"
+            "\\center $\\scalebox{2.5}{$",
+            callCount);
+    nodeTexDumpTraverse(node, f);
+    fputs("$}$\\\\", f);
+}
+
+void treeTexDump(FILE* f, TreeRoot* root) {
+    assert(f);
+    if (!root)
+        return;
+
+    nodeTexDump(f, root->rootNode);
+}
 
 void treeDump(FILE* f, TreeRoot* root, const char* commentary, const char* filename, int line) {
     assert(f);
@@ -147,7 +171,48 @@ void nodeDump(FILE* f, TreeNode* node, const char* commentary, const char* filen
     free(dotPath);
 }
 
-FILE* initLogFile() {
+FILE* initTexLogFile() {
+    time_t timeAbs = time(NULL);
+    char* name = getTimestampedString(".log/", ".tex");
+    if (!name)
+        return NULL;
+
+    FILE* f = fopen(name, "w");
+    if (!f) {
+        free(name);
+        return NULL;
+    }
+    srand((uint)timeAbs);
+
+    fprintf(f,
+            "\\documentclass{article}"
+            "\\usepackage{amsmath}"
+            "\\usepackage{geometry}"
+            "\\usepackage{graphicx}"
+            "\\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref}"
+            "\\usepackage{enumitem}"
+            "\\geometry{a4paper, margin=1in}"
+            "\\begin{document}"
+            "\\section{Differentiating stuff}"
+            "%s\\\\"
+            "Quote: %s\\\\",
+            name + strlen(".log/"),
+            QUOTES[(unsigned long)random()
+                        % (sizeof(QUOTES) / sizeof(char *))]);
+    free(name);
+    return f;
+}
+
+void closeTexLogFile(FILE* file) {
+    if (!file)
+        return;
+
+    fputs("\\end{document}",
+          file);
+    fclose(file);
+}
+
+FILE* initHtmlLogFile() {
     time_t timeAbs = time(NULL);
     char* name = getTimestampedString(".log/", ".html");
     if (!name)
@@ -168,6 +233,45 @@ FILE* initLogFile() {
                         % (sizeof(QUOTES) / sizeof(char *))]);
     free(name);
     return f;
+}
+
+static void nodeTexDumpTraverse(TreeNode* node, FILE* f) {
+	if (!node || !f)
+        return;
+
+    bool needsBrackets = (node->parent &&
+                         ((node->type == NUM_TYPE && node->data < 0) ||
+                         (node->type == OP_TYPE && compareParentPriority(node))));
+    bool isDivision = (node->type == OP_TYPE &&
+                       (OpType)node->data == OP_DIVIDE);
+
+    if (needsBrackets) fputc('(', f);
+    if (isDivision)    fputs("\\frac{", f);
+	nodeTexDumpTraverse(node->left, f);
+    if (isDivision) {
+        fputc('}', f);
+    } else if (node->type == NUM_TYPE) {
+        fprintf(f, "%lg", node->data);
+    } else if (node->type == VAR_TYPE) {
+        fprintf(f, "%c", (int)node->data);
+    } else {
+        OpType opType = (OpType)node->data;
+        fputs(getOpTypeString(opType), f);
+    }
+    if (isDivision)    fputc('{', f);
+    nodeTexDumpTraverse(node->right, f);
+    if (isDivision)    fputc('}', f);
+    if (needsBrackets) fputc(')', f);
+}
+
+static bool compareParentPriority(TreeNode* node) {
+    assert(node);
+    OpType parentType = (OpType)node->parent->data;
+    OpType ownType    = (OpType)node->data;
+
+    return ownType == OP_DIVIDE || parentType == OP_DIVIDE
+           ? false
+           : getOpTypePriority(parentType) > getOpTypePriority(ownType);
 }
 
 static int treeTextDump(FILE* f, TreeRoot* root,

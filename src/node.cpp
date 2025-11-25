@@ -299,6 +299,7 @@ const char* getOpTypeString(OpType type) {
         case OP_MINUS:    return "-";
         case OP_MULTIPLY: return "*";
         case OP_DIVIDE:   return "/";
+        case OP_POWER:    return "^";
         default:       return "UNKNOWN TYPE ERROR";
     }
     return "UNKNOWN TYPE ERROR";
@@ -313,6 +314,8 @@ int getOpType(const char* str) {
         return OP_MULTIPLY;
     if (strcmp(str, "/") == 0)
         return OP_DIVIDE;
+    if (strcmp(str, "^") == 0)
+        return OP_POWER;
     return -1;
 }
 
@@ -321,8 +324,21 @@ uint getOpTypeArgumentCount(OpType type) {
         case OP_PLUS:
         case OP_MINUS:
         case OP_MULTIPLY:
+        case OP_DIVIDE:
+        case OP_POWER:   return 2;
+        default:         return 2;
+    }
+    return 0;
+}
+
+uint getOpTypePriority(OpType type) {
+    switch (type) {
+        case OP_PLUS:
+        case OP_MINUS:    return 1;
+        case OP_MULTIPLY:
         case OP_DIVIDE:   return 2;
-        default:       return 2;
+        case OP_POWER:    return 3;
+        default:          return 0;
     }
     return 0;
 }

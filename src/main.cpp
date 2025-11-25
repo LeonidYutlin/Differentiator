@@ -10,14 +10,17 @@
 //TODO partial derivative
 //TODO total derivative
 int main() {
-    FILE* log = initLogFile();
+    FILE* log = initHtmlLogFile();
+    FILE* tex = initTexLogFile();
 
-    FILE* expr = fopen(".test/expr.txt", "r");
+    FILE* expr = fopen(".test/expr2.txt", "r");
     TreeRoot* tree = treeRead(expr);
     if (!tree)
         fprintf(stderr, "IT IS NULL\n");
     fclose(expr);
     treeDump(log, tree, "<b3>Read tree</b3>");
+    treeTexDump(tex, tree);
+    closeTexLogFile(tex);
 
     treeDestroy(tree, true);
 }

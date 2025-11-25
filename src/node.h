@@ -32,6 +32,7 @@ enum OpType {
     OP_MINUS,
     OP_MULTIPLY,
     OP_DIVIDE,
+    OP_POWER,
 };
 
 TreeStatus nodeInit(TreeNode* node, NodeType type, NodeUnit data, TreeNode* parent = NULL,
@@ -60,5 +61,6 @@ const char* getNodeTypeString(NodeType type);
 const char* getOpTypeString(OpType type);
 int getOpType(const char* string);
 uint getOpTypeArgumentCount(OpType type);
+uint getOpTypePriority(OpType type);
 
 #endif
