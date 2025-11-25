@@ -14,6 +14,8 @@ TreeRoot*  treeDynamicInit(NodeType type, NodeUnit data,
                            TreeNode* left = NULL, TreeNode* right = NULL,
                            TreeStatus* status = NULL);
 
+TreeRoot* treeRead(FILE* file, TreeStatus* status = NULL);
+
 int treeTraverse(TreeRoot* root,
                  int callbackFunction(TreeNode* node, void* data, uint level),
                  void* data = NULL, uint level = 0);

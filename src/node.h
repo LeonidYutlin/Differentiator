@@ -40,7 +40,7 @@ TreeNode*  nodeDynamicInit(NodeType type, NodeUnit data, TreeNode* parent = NULL
                            TreeNode* left = NULL, TreeNode* right = NULL,
                            TreeStatus* status = NULL);
 
-TreeNode* nodeRead(FILE* file, TreeStatus* status = NULL);
+TreeNode* nodeRead(FILE* file, TreeStatus* status = NULL, size_t* nodeCount = NULL);
 
 /// Universal infix traverse - stops if callbackFunction returns true
 int nodeTraverse(TreeNode* node,

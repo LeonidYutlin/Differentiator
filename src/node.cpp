@@ -7,7 +7,8 @@
 static const char* NULL_STRING_REPRESENTATION   = "nil";
 static size_t NULL_STRING_REPRESENTATION_LENGTH = strlen(NULL_STRING_REPRESENTATION);
 
-static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos, TreeStatus* status);
+static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
+                                   TreeStatus* status, size_t* nodeCount);
 
 #define RETURN_WITH_STATUS(value, returnValue) \
         { \
@@ -54,7 +55,7 @@ TreeNode*  nodeDynamicInit(NodeType type, NodeUnit data, TreeNode* parent,
     return node;
 }
 
-TreeNode* nodeRead(FILE* f, TreeStatus* status) {
+TreeNode* nodeRead(FILE* f, TreeStatus* status, size_t* nodeCount) {
     char* buffer = NULL;
     size_t bufferSize = 0;
     if (readBufferFromFile(f, &buffer, &bufferSize))
@@ -62,7 +63,7 @@ TreeNode* nodeRead(FILE* f, TreeStatus* status) {
 
     TreeStatus returnedStatus = OK;
     size_t pos = 0;
-    TreeNode* node = nodeReadRecursion(buffer, bufferSize, &pos, &returnedStatus);
+    TreeNode* node = nodeReadRecursion(buffer, bufferSize, &pos, &returnedStatus, nodeCount);
     free(buffer);
     if (returnedStatus)
         RETURN_WITH_STATUS(returnedStatus, NULL);
@@ -87,7 +88,8 @@ TreeNode* nodeRead(FILE* f, TreeStatus* status) {
             (*pos)++; \
         } \
 
-static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos, TreeStatus* status) {
+static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
+                                   TreeStatus* status, size_t* nodeCount) {
     if (!buf || *pos >= bufSize)
         RETURN_WITH_STATUS(InvalidParameters, NULL);
 
@@ -139,12 +141,12 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos, TreeS
                               ? getOpTypeArgumentCount((OpType)val)
                               : 0;
 
-        TreeNode* left  = nodeReadRecursion(buf, bufSize, pos, status);
+        TreeNode* left  = nodeReadRecursion(buf, bufSize, pos, status, nodeCount);
         if (*status) {
             nodeDestroy(left, true);
             return NULL;
         }
-        TreeNode* right = nodeReadRecursion(buf, bufSize, pos, status);
+        TreeNode* right = nodeReadRecursion(buf, bufSize, pos, status, nodeCount);
         if (*status) {
             //Я знаю что тут всегда ноды и так нулевой указатель
             //однако на будущие случаи лучше иметь деструктор чем не иметь
@@ -179,10 +181,14 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos, TreeS
             nodeDestroy(node, true);
             return NULL;
         }
+
         if (node->left)
             node->left->parent  = node;
         if (node->right)
             node->right->parent = node;
+
+        if (nodeCount)
+            (*nodeCount)++;
         return node;
     } else if (strncmp(buf + *pos,
                        NULL_STRING_REPRESENTATION,
@@ -195,6 +201,7 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos, TreeS
 }
 
 #undef DUMP_ERROR_RETURN
+#undef SKIP_WHITESPACE
 
 int nodeTraverse(TreeNode* node,
                  int cb(TreeNode* node, void* data, uint level),

@@ -46,6 +46,27 @@ TreeRoot* treeDynamicInit(NodeType type, NodeUnit data,
     return root; //return treeVerify(root);
 }
 
+TreeRoot* treeRead(FILE* file, TreeStatus* status) {
+    if (!file)
+        RETURN_WITH_STATUS(InvalidParameters, NULL);
+
+    TreeStatus returnedStatus = OK;
+    TreeRoot* root = treeDynamicInit(NUM_TYPE, NAN, NULL, NULL, &returnedStatus);
+    if (returnedStatus)
+        RETURN_WITH_STATUS(returnedStatus, NULL);
+
+    root->nodeCount = 0;
+    TreeNode* node = nodeRead(file, &returnedStatus, &root->nodeCount);
+    if (returnedStatus) {
+        treeDestroy(root, true);
+        RETURN_WITH_STATUS(returnedStatus, NULL);
+    }
+
+    nodeDestroy(root->rootNode, true);
+    root->rootNode = node;
+    return root;
+}
+
 int treeTraverse(TreeRoot* root,
                  int cb(TreeNode* node, void* data, uint level),
                  void* data, uint level) {
