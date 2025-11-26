@@ -4,27 +4,30 @@
 #include "diff.h"
 #include "calc.h"
 
+//TODO adapt eval for trees
 //TODO multibyte var names (requires a different memorization system)
 //TODO treeInit without node params so it leaves it empty, much easier to use if you want to append root to smth
+//TODO nodeCopy parent logic
 //TODO calculation with given var values
 //TODO differentiation
 //TODO Taylor Series
 //TODO partial derivative
 //TODO total derivative
 int main() {
-    // const char* TESTS[] = {
-    //     "1",
-    //     "10+3",
-    //     "10*7",
-    //     "800-40*20",
-    //     "400/20*20-400",
-    //     "(30-5)/5"
-    // };
-    // size_t testN = sizeof(TESTS) / sizeof(TESTS[0]);
-    // for (size_t i = 0; i < testN; i++) {
-    //     printf("TEST[%lu/%lu]: \"%s\" = %lg\n",
-    //            i + 1, testN, TESTS[i], evaluate(TESTS[i]));
-    // }
+    const char* TESTS[] = {
+        "1",
+        "10+3",
+        "10*7",
+        "800-40*20",
+        "400/20*20-400",
+        "(30-5)/5",
+        "10*7-(5+6*7-(10-40*10))",
+    };
+    size_t testN = sizeof(TESTS) / sizeof(TESTS[0]);
+    for (size_t i = 0; i < testN; i++) {
+        printf("TEST[%lu/%lu]: \"%s\" = %lg\n",
+               i + 1, testN, TESTS[i], evaluate(TESTS[i]));
+    }
 
 
     FILE* log = initHtmlLogFile();
