@@ -1,12 +1,31 @@
 #include "treedef.h"
 #include <stdlib.h>
 
+static int countNodesCallback(TreeNode* node, void* data, uint level);
+
 #define RETURN_WITH_STATUS(value, returnValue) \
         { \
         if (status) \
             *status = value; \
         return returnValue; \
         }
+
+TreeRoot* attachRoot(TreeNode* node, Error* status) {
+    TreeRoot* root = (TreeRoot*)calloc(1, sizeof(TreeRoot));
+    if (!root)
+        RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
+
+    root->status = OK;
+    root->rootNode = node;
+    nodeTraverseInfix(node, countNodesCallback, &root->nodeCount);
+    return root;
+}
+
+static int countNodesCallback(TreeNode* node, void* data, uint level) {
+    size_t* nodeCount = (size_t*)data;
+    (*nodeCount)++;
+    return 0;
+}
 
 Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
                     TreeNode* left, TreeNode* right) {
@@ -29,19 +48,14 @@ Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
 TreeRoot* treeDynamicInit(NodeUnit data,
                           TreeNode* left, TreeNode* right,
                           Error* status) {
-    TreeRoot* root = (TreeRoot*)calloc(1, sizeof(TreeRoot));
-    TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
-    if (!root || !node) {
-        free(root); free(node);
-        RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
-    }
-    root->status = UninitializedTree;
-
-    Error returnedStatus = treeInit(root, node, data, left, right);
-    if (returnedStatus) {
-        free(root); free(node);
+    Error returnedStatus = OK;
+    TreeNode* node = nodeDynamicInit(data, left, right, NULL, &returnedStatus);
+    if (returnedStatus)
         RETURN_WITH_STATUS(returnedStatus, NULL);
-    }
+
+    TreeRoot* root = attachRoot(node, &returnedStatus);
+    if (returnedStatus)
+        RETURN_WITH_STATUS(returnedStatus, NULL);
 
     return root; //return treeVerify(root);
 }
@@ -67,13 +81,13 @@ TreeRoot* treeRead(FILE* file, Error* status) {
     return root;
 }
 
-int treeTraverse(TreeRoot* root,
+int treeTraverseInfix(TreeRoot* root,
                  int cb(TreeNode* node, void* data, uint level),
                  void* data, uint level) {
 	if (!root)
         return OK;
 
-	return nodeTraverse(root->rootNode, cb, data, level);
+	return nodeTraverseInfix(root->rootNode, cb, data, level);
 }
 
 Error treePrintPrefix(FILE* f, TreeRoot* root) {

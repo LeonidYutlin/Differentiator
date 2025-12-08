@@ -7,8 +7,7 @@
 
 //TODO adapt eval for trees
 //TODO multibyte var names (requires a different memorization system)
-//TODO treeInit without node params so it leaves it empty, much easier to use if you want to append root to smth
-//TODO nodeCopy parent logic
+//TODO unions
 //TODO calculation with given var values
 //TODO differentiation
 //TODO Taylor Series
@@ -43,10 +42,11 @@ int main() {
     treeToTex(tex, tree);
     TreeNode* diffTree = differentiate(tree->rootNode, 'x', tex);
     nodeToTex(tex, diffTree);
-    nodeDump(log, diffTree, "<b3> tree after diff </b3>");
+    TreeRoot* diffTreeRoot = attachRoot(diffTree);
+    treeDump(log, diffTreeRoot, "<b3> tree after diff </b3>");
     closeTexLogFile(tex);
 
     treeDestroy(tree, true);
-    nodeDestroy(diffTree, true);
+    treeDestroy(diffTreeRoot, true);
 }
 

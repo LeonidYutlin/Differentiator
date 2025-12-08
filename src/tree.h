@@ -8,6 +8,7 @@
 
 struct TreeRoot;
 
+TreeRoot* attachRoot(TreeNode* node, Error* status = NULL);
 Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
                     TreeNode* left = NULL, TreeNode* right = NULL);
 TreeRoot*  treeDynamicInit(NodeUnit data,
@@ -16,7 +17,7 @@ TreeRoot*  treeDynamicInit(NodeUnit data,
 
 TreeRoot* treeRead(FILE* file, Error* status = NULL);
 
-int treeTraverse(TreeRoot* root,
+int treeTraverseInfix(TreeRoot* root,
                  int callbackFunction(TreeNode* node, void* data, uint level),
                  void* data = NULL, uint level = 0);
 

@@ -200,15 +200,15 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
 #undef DUMP_ERROR_RETURN
 #undef SKIP_WHITESPACE
 
-int nodeTraverse(TreeNode* node,
+int nodeTraverseInfix(TreeNode* node,
                  int cb(TreeNode* node, void* data, uint level),
                  void* data, uint level) {
 	if (!node)
         return OK;
 
-	return nodeTraverse(node->left, cb, data, level + 1) ||
+	return nodeTraverseInfix(node->left, cb, data, level + 1) ||
            cb(node, data, level) ||
-           nodeTraverse(node->right, cb, data, level + 1);
+           nodeTraverseInfix(node->right, cb, data, level + 1);
 }
 
 int nodeTraversePrefix(TreeNode* node,
