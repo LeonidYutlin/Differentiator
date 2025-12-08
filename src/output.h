@@ -6,6 +6,7 @@
 
 void nodeToTex(FILE* tex, TreeNode* node);
 void treeToTex(FILE* tex, TreeRoot* root);
+TreeNode* differentiationStepToTex(FILE* f, char var, TreeNode* before, TreeNode* after);
 
 FILE* initTexLogFile();
 void closeTexLogFile(FILE* file);

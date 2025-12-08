@@ -13,12 +13,12 @@ const char* getNodeTypeString(NodeType type) {
 
 const char* getOpTypeString(OpType type) {
     switch (type) {
-        case OP_ADD:     return "+";
-        case OP_SUB:    return "-";
+        case OP_ADD: return "+";
+        case OP_SUB: return "-";
         case OP_MUL: return "*";
-        case OP_DIV:   return "/";
-        case OP_POW:    return "^";
-        default:       return "UNKNOWN TYPE ERROR";
+        case OP_DIV: return "/";
+        case OP_POW: return "^";
+        default:     return "UNKNOWN TYPE ERROR";
     }
     return "UNKNOWN TYPE ERROR";
 }
@@ -52,11 +52,11 @@ uint getOpTypeArgumentCount(OpType type) {
 uint getOpTypePriority(OpType type) {
     switch (type) {
         case OP_ADD:
-        case OP_SUB:    return 1;
+        case OP_SUB: return 1;
         case OP_MUL:
-        case OP_DIV:   return 2;
-        case OP_POW:    return 3;
-        default:          return 0;
+        case OP_DIV: return 2;
+        case OP_POW: return 3;
+        default:     return 0;
     }
     return 0;
 }

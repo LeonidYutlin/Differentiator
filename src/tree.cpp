@@ -1,8 +1,6 @@
 #include "treedef.h"
 #include <stdlib.h>
 
-static int countNodesCallback(TreeNode* node, void* data, uint level);
-
 #define RETURN_WITH_STATUS(value, returnValue) \
         { \
         if (status) \
@@ -21,7 +19,7 @@ TreeRoot* attachRoot(TreeNode* node, Error* status) {
     return root;
 }
 
-static int countNodesCallback(TreeNode* node, void* data, uint level) {
+int countNodesCallback(TreeNode* node, void* data, uint level) {
     size_t* nodeCount = (size_t*)data;
     (*nodeCount)++;
     return 0;

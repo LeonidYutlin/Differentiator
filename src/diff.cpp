@@ -15,9 +15,9 @@
 #define D_X \
         nodeDynamicInit({NUM_TYPE, 1})
 #define D_L \
-        differentiate(node->left, var, tex)
+        differentiateRec(node->left, var, tex)
 #define D_R \
-        differentiate(node->right, var, tex)
+        differentiateRec(node->right, var, tex)
 #define C_L \
         nodeCopy(node->left, NULL, NULL)
 #define C_R \
@@ -39,41 +39,55 @@ TreeNode* differentiate(TreeNode* node, char var, FILE* tex) {
     if (!node)
         return NULL;
 
+    if (tex) {
+        fprintf(tex, "\\raggedright\\scalebox{1.5}{A derivative of this expression is deemed quite trivial:}\\\\");
+        nodeToTex(tex, node);
+    }
+
     TreeNode* diff = differentiateRec(node, var, tex);
     nodeFixParents(diff);
     return diff;
 }
 
+#define DUMP_TO_TEX_AND_RETURN(returnNode) \
+        { \
+        if (tex) { \
+            return differentiationStepToTex(tex, var, node, returnNode); \
+        } else { \
+            return returnNode; \
+        }\
+        }\
+
 static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
     if (!node)
         return NULL;
 
-    nodeToTex(tex, node);
-
     if (node->data.type == NUM_TYPE ||
         (node->data.type == VAR_TYPE && (char)node->data.value != var)) {
         // fprintf(stderr, "Called const der, node->data.value char is %c and var is %c\n", (char)node->data.value, var);
-        return D_CONST;
+        DUMP_TO_TEX_AND_RETURN(D_CONST);
     }
 
     if (node->data.type == VAR_TYPE && (char)node->data.value == var) {
         //fprintf(stderr, "Called x der\n");
-        return D_X;
+        DUMP_TO_TEX_AND_RETURN(D_X);
     }
 
     if (node->data.type == OP_TYPE) {
         OpType opType = (OpType)node->data.value;
         switch (opType) {
-            case OP_ADD: return ADD_(D_L, D_R);
-            case OP_SUB: return SUB_(D_L, D_R);
-            case OP_MUL: return ADD_(MUL_(D_L, C_R), MUL_(C_L, D_R));
-            case OP_DIV: return DIV_(SUB_(MUL_(C_R, D_L), MUL_(D_R, C_L)), SQ_(C_R));
+            case OP_ADD: DUMP_TO_TEX_AND_RETURN(ADD_(D_L, D_R));
+            case OP_SUB: DUMP_TO_TEX_AND_RETURN(SUB_(D_L, D_R));
+            case OP_MUL: DUMP_TO_TEX_AND_RETURN(ADD_(MUL_(D_L, C_R), MUL_(C_L, D_R)));
+            case OP_DIV: DUMP_TO_TEX_AND_RETURN(DIV_(SUB_(MUL_(C_R, D_L), MUL_(D_R, C_L)), SQ_(C_R)));
+            //case OP_POW: return diffPower()
         }
     }
 
     return NULL;
 }
 
+#undef DUMP_TO_TEX_AND_RETURN
 #undef RETURN_WITH_STATUS
 #undef D_CONST
 #undef D_X

@@ -35,18 +35,24 @@ int main() {
 
     FILE* expr = fopen(".test/expr3.txt", "r");
     TreeRoot* tree = treeRead(expr);
-    if (!tree)
+    if (!tree) {
         fprintf(stderr, "IT IS NULL\n");
+        return 1;
+    }
     fclose(expr);
     treeDump(log, tree, "<b3>Read tree</b3>");
     treeToTex(tex, tree);
-    TreeNode* diffTree = differentiate(tree->rootNode, 'x', tex);
-    nodeToTex(tex, diffTree);
-    TreeRoot* diffTreeRoot = attachRoot(diffTree);
-    treeDump(log, diffTreeRoot, "<b3> tree after diff </b3>");
+    TreeNode* diffTreeX = differentiate(tree->rootNode, 'x', tex);
+    // TreeNode* diffTreeY = differentiate(tree->rootNode, 'y', tex);
+    // TreeNode* diffTreeZ = differentiate(tree->rootNode, 'z', tex);
+    nodeDump(log, diffTreeX, "<b3> tree after diff </b3>");
+    nodeToTex(tex, diffTreeX);
     closeTexLogFile(tex);
+    fclose(log);
 
     treeDestroy(tree, true);
-    treeDestroy(diffTreeRoot, true);
+    nodeDestroy(diffTreeX, true);
+    // nodeDestroy(diffTreeY, true);
+    // nodeDestroy(diffTreeZ, true);
 }
 

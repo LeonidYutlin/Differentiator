@@ -27,4 +27,6 @@ Error treePrintPostfix(FILE* file, TreeRoot* root);
 
 Error treeDestroy(TreeRoot* tree, bool isAlloced = false);
 
+int countNodesCallback(TreeNode* node, void* data, uint level);
+
 #endif
