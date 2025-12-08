@@ -8,7 +8,7 @@
         return returnValue; \
         }
 
-TreeStatus treeInit(TreeRoot* root, TreeNode* node, NodeType type, NodeUnit data,
+Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
                     TreeNode* left, TreeNode* right) {
     if (!root || !node)
         return InvalidParameters;
@@ -16,7 +16,7 @@ TreeStatus treeInit(TreeRoot* root, TreeNode* node, NodeType type, NodeUnit data
         root->status != DestroyedTree)
         return AttemptedReinitialization;
 
-    TreeStatus status = nodeInit(node, type, data, NULL, left, right);
+    Error status = nodeInit(node, data, NULL, left, right);
     if (status)
         return status;
     root->rootNode = node;
@@ -26,9 +26,9 @@ TreeStatus treeInit(TreeRoot* root, TreeNode* node, NodeType type, NodeUnit data
     return OK; //return treeVerify(root);
 }
 
-TreeRoot* treeDynamicInit(NodeType type, NodeUnit data,
+TreeRoot* treeDynamicInit(NodeUnit data,
                           TreeNode* left, TreeNode* right,
-                          TreeStatus* status) {
+                          Error* status) {
     TreeRoot* root = (TreeRoot*)calloc(1, sizeof(TreeRoot));
     TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
     if (!root || !node) {
@@ -37,7 +37,7 @@ TreeRoot* treeDynamicInit(NodeType type, NodeUnit data,
     }
     root->status = UninitializedTree;
 
-    TreeStatus returnedStatus = treeInit(root, node, type, data, left, right);
+    Error returnedStatus = treeInit(root, node, data, left, right);
     if (returnedStatus) {
         free(root); free(node);
         RETURN_WITH_STATUS(returnedStatus, NULL);
@@ -46,12 +46,12 @@ TreeRoot* treeDynamicInit(NodeType type, NodeUnit data,
     return root; //return treeVerify(root);
 }
 
-TreeRoot* treeRead(FILE* file, TreeStatus* status) {
+TreeRoot* treeRead(FILE* file, Error* status) {
     if (!file)
         RETURN_WITH_STATUS(InvalidParameters, NULL);
 
-    TreeStatus returnedStatus = OK;
-    TreeRoot* root = treeDynamicInit(NUM_TYPE, NAN, NULL, NULL, &returnedStatus);
+    Error returnedStatus = OK;
+    TreeRoot* root = treeDynamicInit((NodeUnit){}, NULL, NULL, &returnedStatus);
     if (returnedStatus)
         RETURN_WITH_STATUS(returnedStatus, NULL);
 
@@ -76,28 +76,28 @@ int treeTraverse(TreeRoot* root,
 	return nodeTraverse(root->rootNode, cb, data, level);
 }
 
-TreeStatus treePrintPrefix(FILE* f, TreeRoot* root) {
+Error treePrintPrefix(FILE* f, TreeRoot* root) {
     if (!root)
         return InvalidParameters;
 
     return nodePrintPrefix(f, root->rootNode);
 }
 
-TreeStatus treePrintInfix(FILE* f, TreeRoot* root) {
+Error treePrintInfix(FILE* f, TreeRoot* root) {
     if (!root)
         return InvalidParameters;
 
     return nodePrintInfix(f, root->rootNode);
 }
 
-TreeStatus treePrintPostfix(FILE* f, TreeRoot* root) {
+Error treePrintPostfix(FILE* f, TreeRoot* root) {
     if (!root)
         return InvalidParameters;
 
     return nodePrintPostfix(f, root->rootNode);
 }
 
-TreeStatus treeDestroy(TreeRoot* root, bool isAlloced) {
+Error treeDestroy(TreeRoot* root, bool isAlloced) {
     if (!root)
         return InvalidParameters;
 

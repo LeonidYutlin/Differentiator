@@ -5,7 +5,7 @@
 #include "nodedef.h"
 
 struct TreeRoot{
-    TreeStatus status = UninitializedTree;
+    Error status = UninitializedTree;
     size_t nodeCount  = 0;
     TreeNode* rootNode = NULL;
 };

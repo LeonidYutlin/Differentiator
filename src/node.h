@@ -4,44 +4,31 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <math.h>
 #include <sys/types.h>
+#include "nodetype.h"
+#include "error.h"
 
-const size_t MAX_VALUE_STRING_LENGTH = 16;
-
-typedef double NodeUnit;
+typedef struct NodeUnit{
+    NodeType type = UNKNOWN_TYPE;
+    double value = NAN;
+} NodeUnit;
 struct TreeNode;
 
 enum TreeStatus {
-    OK = 0,
-    UninitializedTree,
+    UninitializedTree = NON_GENERIC_ERROR,
     DestroyedTree,
     AttemptedReinitialization,
-    InvalidParameters,
-    FailMemoryAllocation,
     FailReadNode,
 };
 
-enum NodeType {
-    OP_TYPE,
-    NUM_TYPE,
-    VAR_TYPE,
-};
-
-enum OpType {
-    OP_PLUS,
-    OP_MINUS,
-    OP_MULTIPLY,
-    OP_DIVIDE,
-    OP_POWER,
-};
-
-TreeStatus nodeInit(TreeNode* node, NodeType type, NodeUnit data, TreeNode* parent = NULL,
-                    TreeNode* left = NULL, TreeNode* right = NULL);
-TreeNode*  nodeDynamicInit(NodeType type, NodeUnit data, TreeNode* parent = NULL,
+Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent = NULL,
+               TreeNode* left = NULL, TreeNode* right = NULL);
+TreeNode*  nodeDynamicInit(NodeUnit data, TreeNode* parent = NULL,
                            TreeNode* left = NULL, TreeNode* right = NULL,
-                           TreeStatus* status = NULL);
+                           Error* status = NULL);
 
-TreeNode* nodeRead(FILE* file, TreeStatus* status = NULL, size_t* nodeCount = NULL);
+TreeNode* nodeRead(FILE* file, Error* status = NULL, size_t* nodeCount = NULL);
 
 /// Universal infix traverse - stops if callbackFunction returns true
 int nodeTraverse(TreeNode* node,
@@ -52,21 +39,15 @@ int nodeTraversePrefix (TreeNode* node,
                         void* data = NULL, uint level = 0);
 // copy-paste postfix traverses...
 
-TreeStatus nodePrintPrefix (FILE* file, TreeNode* node);
-TreeStatus nodePrintInfix  (FILE* file, TreeNode* node);
-TreeStatus nodePrintPostfix(FILE* file, TreeNode* node);
+Error nodePrintPrefix (FILE* file, TreeNode* node);
+Error nodePrintInfix  (FILE* file, TreeNode* node);
+Error nodePrintPostfix(FILE* file, TreeNode* node);
 
-///Note: doesnt copy the parent field and leaves it NULL instead
-TreeNode*  nodeCopy(TreeNode* srcNode, TreeStatus* status = NULL);
+///Note: doesnt copy the parent field but instead assigns newParent as copy's parent
+TreeNode*  nodeCopy(TreeNode* srcNode, TreeNode* newParent, Error* status = NULL);
+void nodeFixParents(TreeNode* node);
 
-TreeStatus nodeDelete(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
-
-TreeStatus nodeDestroy(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
-
-const char* getNodeTypeString(NodeType type);
-const char* getOpTypeString(OpType type);
-int getOpType(const char* string);
-uint getOpTypeArgumentCount(OpType type);
-uint getOpTypePriority(OpType type);
+Error  nodeDelete(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
+Error nodeDestroy(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
 
 #endif

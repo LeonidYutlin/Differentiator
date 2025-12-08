@@ -16,7 +16,7 @@ int readBufferFromFile(FILE* file,
     //fprintf(stderr, "calling calloc with this being the size: %lu\n", bufferSize);
     char* buffer = (char*) calloc(bufferSize, sizeof(char));
     if (!buffer)
-        return 2;
+        return 2; ///////
 
     //fprintf(stderr, "this is buffer before read: %s\n", buffer);
     bufferSize = fread(buffer, sizeof(char), bufferSize, file);

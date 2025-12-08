@@ -2,11 +2,11 @@
 #define NODE_DEF_H
 
 #include "node.h"
+#include "nodetype.h"
 #include "math.h"
 
 struct TreeNode{
-    NodeType  type   = NUM_TYPE;
-    NodeUnit  data   = NAN;
+    NodeUnit  data   = {};
     TreeNode* parent = NULL;
     TreeNode* left   = NULL;
     TreeNode* right  = NULL;

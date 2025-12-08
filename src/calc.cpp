@@ -93,4 +93,3 @@ static double getN(const char* buf, size_t* p) {
 }
 
 #undef SYNTAX_ERROR
-

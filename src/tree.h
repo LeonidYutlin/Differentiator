@@ -8,22 +8,22 @@
 
 struct TreeRoot;
 
-TreeStatus treeInit(TreeRoot* root, TreeNode* node, NodeType type, NodeUnit data,
+Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
                     TreeNode* left = NULL, TreeNode* right = NULL);
-TreeRoot*  treeDynamicInit(NodeType type, NodeUnit data,
+TreeRoot*  treeDynamicInit(NodeUnit data,
                            TreeNode* left = NULL, TreeNode* right = NULL,
-                           TreeStatus* status = NULL);
+                           Error* status = NULL);
 
-TreeRoot* treeRead(FILE* file, TreeStatus* status = NULL);
+TreeRoot* treeRead(FILE* file, Error* status = NULL);
 
 int treeTraverse(TreeRoot* root,
                  int callbackFunction(TreeNode* node, void* data, uint level),
                  void* data = NULL, uint level = 0);
 
-TreeStatus treePrintPrefix (FILE* file, TreeRoot* root);
-TreeStatus treePrintInfix  (FILE* file, TreeRoot* root);
-TreeStatus treePrintPostfix(FILE* file, TreeRoot* root);
+Error treePrintPrefix (FILE* file, TreeRoot* root);
+Error treePrintInfix  (FILE* file, TreeRoot* root);
+Error treePrintPostfix(FILE* file, TreeRoot* root);
 
-TreeStatus treeDestroy(TreeRoot* tree, bool isAlloced = false);
+Error treeDestroy(TreeRoot* tree, bool isAlloced = false);
 
 #endif

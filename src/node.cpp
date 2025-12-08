@@ -8,7 +8,7 @@ static const char* NULL_STRING_REPRESENTATION   = "nil";
 static size_t NULL_STRING_REPRESENTATION_LENGTH = strlen(NULL_STRING_REPRESENTATION);
 
 static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
-                                   TreeStatus* status, size_t* nodeCount);
+                                   Error* status, size_t* nodeCount);
 
 #define RETURN_WITH_STATUS(value, returnValue) \
         { \
@@ -17,17 +17,15 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
         return returnValue; \
         }
 
-TreeStatus nodeInit(TreeNode* node, NodeType type, NodeUnit data, TreeNode* parent,
+Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent,
                     TreeNode* left, TreeNode* right) {
     if (!node)
         return InvalidParameters;
-    if (/*!isnan(node->data)  ||*/
-        node->left  ||
+    if (node->left  ||
         node->right ||
         node->left)
         return AttemptedReinitialization;
 
-    node->type   = type;
     node->data   = data;
     node->parent = parent;
     node->left   = left;
@@ -36,17 +34,17 @@ TreeStatus nodeInit(TreeNode* node, NodeType type, NodeUnit data, TreeNode* pare
     return OK;
 }
 
-TreeNode*  nodeDynamicInit(NodeType type, NodeUnit data, TreeNode* parent,
+TreeNode*  nodeDynamicInit(NodeUnit data, TreeNode* parent,
                            TreeNode* left, TreeNode* right,
-                           TreeStatus* status) {
+                           Error* status) {
     TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
     if (!node) {
         free(node);
         RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
     }
-    *node = {.data = NAN};
+    *node = {};
 
-    TreeStatus returnedStatus = nodeInit(node, type, data, parent, left, right);
+    Error returnedStatus = nodeInit(node, data, parent, left, right);
     if (returnedStatus) {
         free(node);
         RETURN_WITH_STATUS(returnedStatus, NULL);
@@ -55,13 +53,13 @@ TreeNode*  nodeDynamicInit(NodeType type, NodeUnit data, TreeNode* parent,
     return node;
 }
 
-TreeNode* nodeRead(FILE* f, TreeStatus* status, size_t* nodeCount) {
+TreeNode* nodeRead(FILE* f, Error* status, size_t* nodeCount) {
     char* buffer = NULL;
     size_t bufferSize = 0;
     if (readBufferFromFile(f, &buffer, &bufferSize))
         RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
 
-    TreeStatus returnedStatus = OK;
+    Error returnedStatus = OK;
     size_t pos = 0;
     TreeNode* node = nodeReadRecursion(buffer, bufferSize, &pos, &returnedStatus, nodeCount);
     free(buffer);
@@ -89,7 +87,7 @@ TreeNode* nodeRead(FILE* f, TreeStatus* status, size_t* nodeCount) {
         } \
 
 static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
-                                   TreeStatus* status, size_t* nodeCount) {
+                                   Error* status, size_t* nodeCount) {
     if (!buf || *pos >= bufSize)
         RETURN_WITH_STATUS(InvalidParameters, NULL);
 
@@ -103,16 +101,15 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
     if (buf[*pos] == '(') {
         (*pos)++;
         SKIP_WHITESPACE;
-        double val = NAN;
-        NodeType type = NUM_TYPE;
+        NodeUnit data = {};
         int charReadN = 0;
         if (isdigit(buf[*pos]) ||
             (buf[*pos] == '-' && isdigit(buf[*pos + 1]))) {
             if (sscanf(buf + *pos,
                        "%lg%n",
-                       &val, &charReadN) != 1)
+                       &data.value, &charReadN) != 1)
                 DUMP_ERROR_RETURN("No valid value in node");
-            type = NUM_TYPE;
+            data.type = NUM_TYPE;
             *pos += (size_t)charReadN;
         } else {
             char valStr[MAX_VALUE_STRING_LENGTH] = {0};
@@ -123,22 +120,22 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
             int opType = getOpType(valStr);
             //fprintf(stderr, "returned opType %d\n", opType);
             if (opType >= 0) {
-                val = opType;
-                type = OP_TYPE;
+                data.value = opType;
+                data.type = OP_TYPE;
                 *pos += (size_t)charReadN;
             } else if (charReadN == 1){
-                val = buf[*pos];
-                type = VAR_TYPE;
+                data.value = buf[*pos];
+                data.type = VAR_TYPE;
                 *pos += (size_t)charReadN;
             } else {
                 DUMP_ERROR_RETURN("Bad variable name in node (longer than 1 char?)");
             }
         }
-        if (isnan(val))
+        if (isnan(data.value))
             DUMP_ERROR_RETURN("No value in node");
 
-        uint expectedChildN = type == OP_TYPE
-                              ? getOpTypeArgumentCount((OpType)val)
+        uint expectedChildN = data.type == OP_TYPE
+                              ? getOpTypeArgumentCount((OpType)data.value)
                               : 0;
 
         TreeNode* left  = nodeReadRecursion(buf, bufSize, pos, status, nodeCount);
@@ -174,7 +171,7 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
             DUMP_ERROR_RETURN("No closing parenthesis");
         }
 
-        TreeNode* node = nodeDynamicInit(type, val, NULL, left, right, status);
+        TreeNode* node = nodeDynamicInit(data, NULL, left, right, status);
         if (*status) {
             nodeDestroy(left, true);
             nodeDestroy(right, true);
@@ -225,50 +222,53 @@ int nodeTraversePrefix(TreeNode* node,
            nodeTraversePrefix(node->right, cb, data, level + 1);
 }
 
-TreeStatus nodePrintPrefix(FILE* f, TreeNode* node) {
+Error nodePrintPrefix(FILE* f, TreeNode* node) {
     if (!node)
         return InvalidParameters;
 
     fputc('(', f);
-    fprintf(f, "%lf", node->data);
+    fprintf(f, "%lf", node->data.value);
     nodePrintPrefix(f, node->left);
     nodePrintPrefix(f, node->right);
     fputc(')', f);
     return OK;
 }
 
-TreeStatus nodePrintInfix(FILE* f, TreeNode* node) {
+Error nodePrintInfix(FILE* f, TreeNode* node) {
     if (!node)
         return InvalidParameters;
 
     fputc('(', f);
     nodePrintPrefix(f, node->left);
-    fprintf(f, "%lf", node->data);
+    fprintf(f, "%lf", node->data.value);
     nodePrintPrefix(f, node->right);
     fputc(')', f);
     return OK;
 }
 
-TreeStatus nodePrintPostfix(FILE* f, TreeNode* node) { /////
+Error nodePrintPostfix(FILE* f, TreeNode* node) { ///// ?
     if (!node)
         return InvalidParameters;
 
     fputc('(', f);
     nodePrintPrefix(f, node->left);
     nodePrintPrefix(f, node->right);
-    fprintf(f, "%lf", node->data);
+    fprintf(f, "%lf", node->data.value);
     fputc(')', f);
     return OK;
 }
 
-TreeNode* nodeCopy(TreeNode* src, TreeStatus* status) {
+TreeNode* nodeCopy(TreeNode* src, TreeNode* newParent, Error* status) {
     if (!src)
         RETURN_WITH_STATUS(InvalidParameters, NULL);
 
-    TreeStatus returnedStatus = OK;
-    TreeNode* copy = nodeDynamicInit(src->type, src->data, NULL,
-                                     src->left  ? nodeCopy(src->left)  : NULL,
-                                     src->right ? nodeCopy(src->right) : NULL);
+    Error returnedStatus = OK;
+    TreeNode* copy = nodeDynamicInit({src->data.type, src->data.value}, newParent);
+    if (src->left)
+        copy->left = nodeCopy(src->left, copy);
+    if (src->right)
+        copy->right = nodeCopy(src->right, copy);
+
     if (returnedStatus) {
         nodeDestroy(copy, true);
         RETURN_WITH_STATUS(returnedStatus, NULL);
@@ -277,7 +277,21 @@ TreeNode* nodeCopy(TreeNode* src, TreeStatus* status) {
     return copy;
 }
 
-TreeStatus nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {
+void nodeFixParents(TreeNode* node) {
+    if (!node)
+        return;
+
+    if (node->left) {
+        node->left->parent  = node;
+        nodeFixParents(node->left);
+    }
+    if (node->right) {
+        node->right->parent = node;
+        nodeFixParents(node->right);
+    }
+}
+
+Error nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {
     if (!node)
         return InvalidParameters;
 
@@ -291,7 +305,7 @@ TreeStatus nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {
     return nodeDestroy(node, isAlloced, nodeCount);
 }
 
-TreeStatus nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
+Error nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
     if (!node)
         return InvalidParameters;
 
@@ -300,7 +314,7 @@ TreeStatus nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
     node->left   = NULL;
     node->right  = NULL;
     node->parent = NULL;
-    node->data   = 0;
+    node->data.value   = {};
 
     if (isAlloced)
         free(node);
@@ -308,66 +322,6 @@ TreeStatus nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
         (*nodeCount)--;
 
     return OK;
-}
-
-const char* getNodeTypeString(NodeType type) {
-    switch (type) {
-        case OP_TYPE:  return "OP";
-        case NUM_TYPE: return "NUM";
-        case VAR_TYPE: return "VAR";
-        default:       return "UNKNOWN TYPE ERROR";
-    }
-    return "UNKNOWN TYPE ERROR";
-}
-
-const char* getOpTypeString(OpType type) {
-    switch (type) {
-        case OP_PLUS:     return "+";
-        case OP_MINUS:    return "-";
-        case OP_MULTIPLY: return "*";
-        case OP_DIVIDE:   return "/";
-        case OP_POWER:    return "^";
-        default:       return "UNKNOWN TYPE ERROR";
-    }
-    return "UNKNOWN TYPE ERROR";
-}
-
-int getOpType(const char* str) {
-    if (strcmp(str, "+") == 0)
-        return OP_PLUS;
-    if (strcmp(str, "-") == 0)
-        return OP_MINUS;
-    if (strcmp(str, "*") == 0)
-        return OP_MULTIPLY;
-    if (strcmp(str, "/") == 0)
-        return OP_DIVIDE;
-    if (strcmp(str, "^") == 0)
-        return OP_POWER;
-    return -1;
-}
-
-uint getOpTypeArgumentCount(OpType type) {
-    switch (type) {
-        case OP_PLUS:
-        case OP_MINUS:
-        case OP_MULTIPLY:
-        case OP_DIVIDE:
-        case OP_POWER:   return 2;
-        default:         return 2;
-    }
-    return 0;
-}
-
-uint getOpTypePriority(OpType type) {
-    switch (type) {
-        case OP_PLUS:
-        case OP_MINUS:    return 1;
-        case OP_MULTIPLY:
-        case OP_DIVIDE:   return 2;
-        case OP_POWER:    return 3;
-        default:          return 0;
-    }
-    return 0;
 }
 
 #undef RETURN_WITH_STATUS

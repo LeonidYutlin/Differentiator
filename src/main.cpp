@@ -3,6 +3,7 @@
 #include "dump.h"
 #include "diff.h"
 #include "calc.h"
+#include "output.h"
 
 //TODO adapt eval for trees
 //TODO multibyte var names (requires a different memorization system)
@@ -39,9 +40,9 @@ int main() {
         fprintf(stderr, "IT IS NULL\n");
     fclose(expr);
     treeDump(log, tree, "<b3>Read tree</b3>");
-    treeTexDump(tex, tree);
+    treeToTex(tex, tree);
     TreeNode* diffTree = differentiate(tree->rootNode, 'x', tex);
-    nodeTexDump(tex, diffTree);
+    nodeToTex(tex, diffTree);
     nodeDump(log, diffTree, "<b3> tree after diff </b3>");
     closeTexLogFile(tex);
 
