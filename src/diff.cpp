@@ -1,4 +1,4 @@
-#include "nodedef.h"
+#include "node.h"
 #include "diff.h"
 #include "output.h"
 #include <assert.h>

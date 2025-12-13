@@ -9,11 +9,17 @@
 #include "nodetype.h"
 #include "error.h"
 
-typedef struct NodeUnit{
+struct NodeUnit {
     NodeType type = UNKNOWN_TYPE;
     double value = NAN;
-} NodeUnit;
-struct TreeNode;
+};
+
+struct TreeNode {
+    NodeUnit  data   = {};
+    TreeNode* parent = NULL;
+    TreeNode* left   = NULL;
+    TreeNode* right  = NULL;
+};
 
 enum TreeStatus {
     UninitializedTree = NON_GENERIC_ERROR,

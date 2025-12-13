@@ -1,4 +1,4 @@
-#include "treedef.h"
+#include "tree.h"
 #include "output.h"
 #include "util.h"
 #include "quotes.h"
@@ -19,7 +19,7 @@ void nodeToTex(FILE* f, TreeNode* node) {
             "\\raggedright\\scalebox{1.5}{(%u):}\\center \\scalebox{2.5}{$ ",
             stepCount);
     nodeToTexTraverse(node, f);
-    fputs("$}\\\\", f);
+    fputs("$}\\\\\n", f);
 }
 
 TreeNode* differentiationStepToTex(FILE* f, char var, TreeNode* before, TreeNode* after) {
@@ -39,7 +39,7 @@ TreeNode* differentiationStepToTex(FILE* f, char var, TreeNode* before, TreeNode
     nodeToTexTraverse(before, f);
     fprintf(f, " = ");
     nodeToTexTraverse(after, f);
-    fputs("$}\\\\", f);
+    fputs("$}\\\\\n", f);
     return after;
 }
 
@@ -106,8 +106,8 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f) {
     bool isDivision = (node->data.type == OP_TYPE &&
                        (OpType)node->data.value == OP_DIV);
 
-    if (needsBrackets) fputc('\\left(', f);
-    if (isDivision)    fputs("\\frac{", f);
+    if (needsBrackets) fprintf(f, "\\left(");
+    if (isDivision)    fprintf(f, "\\frac{");
 	nodeToTexTraverse(node->left, f);
     if (isDivision) {
         fputc('}', f);
@@ -122,7 +122,7 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f) {
     if (isDivision)    fputc('{', f);
     nodeToTexTraverse(node->right, f);
     if (isDivision)    fputc('}', f);
-    if (needsBrackets) fputc('\\right)', f);
+    if (needsBrackets) fprintf(f, "\\right)");
 }
 
 static bool compareParentPriority(TreeNode* node) {

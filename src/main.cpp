@@ -1,5 +1,5 @@
-#include "treedef.h"
-#include "nodedef.h"
+#include "tree.h"
+#include "node.h"
 #include "dump.h"
 #include "diff.h"
 #include "calc.h"

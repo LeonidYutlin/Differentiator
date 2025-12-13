@@ -6,7 +6,11 @@
 #include <stdio.h>
 #include "node.h"
 
-struct TreeRoot;
+struct TreeRoot {
+    Error status = UninitializedTree;
+    size_t nodeCount  = 0;
+    TreeNode* rootNode = NULL;
+};
 
 TreeRoot* attachRoot(TreeNode* node, Error* status = NULL);
 Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,

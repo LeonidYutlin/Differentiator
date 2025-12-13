@@ -1,4 +1,4 @@
-#include "nodedef.h"
+#include "node.h"
 #include "file.h"
 #include <stdlib.h>
 #include <ctype.h>

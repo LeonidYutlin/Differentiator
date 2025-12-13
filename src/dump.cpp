@@ -1,5 +1,5 @@
 #include "dump.h"
-#include "treedef.h"
+#include "tree.h"
 #undef treeDump
 #undef nodeDump
 
