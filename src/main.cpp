@@ -1,9 +1,8 @@
-#include "tree.h"
-#include "node.h"
-#include "dump.h"
-#include "diff.h"
-#include "calc.h"
-#include "output.h"
+#include "data_structures/tree/tree.h"
+#include "data_structures/tree/dump/dump.h"
+#include "math/diff.h"
+#include "math/calc.h"
+#include "io/io.h"
 
 //TODO adapt eval for trees
 //TODO multibyte var names (requires a different memorization system)

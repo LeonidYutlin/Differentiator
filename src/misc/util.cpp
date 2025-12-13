@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 static const size_t MAX_TIMESTAMPED_FILE_PATH_LENGTH = 128;
 
@@ -33,4 +34,26 @@ char* getTimestampedString(const char* prefix, const char* suffix, uint count) {
     }
     free(pattern);
     return name;
+}
+
+Error readBufferFromFile(FILE* file,
+                         char** bufferPtr, size_t* trueBufferSizePtr) {
+    if (!file ||
+        !bufferPtr ||
+        !trueBufferSizePtr)
+        return InvalidParameters;
+
+    struct stat fileStats = {0};
+    fstat(file->_fileno, &fileStats);
+    size_t bufferSize = (size_t) fileStats.st_size;
+    char* buffer = (char*) calloc(bufferSize, sizeof(char));
+    if (!buffer)
+        return FailMemoryAllocation;
+
+    bufferSize = fread(buffer, sizeof(char), bufferSize, file);
+
+    *trueBufferSizePtr = bufferSize;
+    *bufferPtr = buffer;
+
+    return OK;
 }

@@ -1,7 +1,7 @@
-#include "tree.h"
-#include "output.h"
-#include "util.h"
-#include "quotes.h"
+#include "../data_structures/tree/tree.h"
+#include "io.h"
+#include "../misc/util.h"
+#include "../misc/quotes.h"
 #include <time.h>
 #include <assert.h>
 #include <string.h>

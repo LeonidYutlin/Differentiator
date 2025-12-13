@@ -21,9 +21,9 @@ TreeRoot*  treeDynamicInit(NodeUnit data,
 
 TreeRoot* treeRead(FILE* file, Error* status = NULL);
 
-int treeTraverseInfix(TreeRoot* root,
-                 int callbackFunction(TreeNode* node, void* data, uint level),
-                 void* data = NULL, uint level = 0);
+Error treeTraverseInfix(TreeRoot* root,
+                        callback_f callbackFunction,
+                        void* data = NULL, uint level = 0);
 
 Error treePrintPrefix (FILE* file, TreeRoot* root);
 Error treePrintInfix  (FILE* file, TreeRoot* root);
@@ -31,6 +31,6 @@ Error treePrintPostfix(FILE* file, TreeRoot* root);
 
 Error treeDestroy(TreeRoot* tree, bool isAlloced = false);
 
-int countNodesCallback(TreeNode* node, void* data, uint level);
+Error countNodesCallback(TreeNode* node, void* data, uint level);
 
 #endif

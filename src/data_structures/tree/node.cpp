@@ -1,5 +1,5 @@
 #include "node.h"
-#include "file.h"
+#include "../../misc/util.h"
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -200,9 +200,9 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
 #undef DUMP_ERROR_RETURN
 #undef SKIP_WHITESPACE
 
-int nodeTraverseInfix(TreeNode* node,
-                 int cb(TreeNode* node, void* data, uint level),
-                 void* data, uint level) {
+Error nodeTraverseInfix(TreeNode* node,
+                        int cb(TreeNode* node, void* data, uint level),
+                        void* data, uint level) {
 	if (!node)
         return OK;
 
@@ -211,9 +211,9 @@ int nodeTraverseInfix(TreeNode* node,
            nodeTraverseInfix(node->right, cb, data, level + 1);
 }
 
-int nodeTraversePrefix(TreeNode* node,
-                       int cb(TreeNode* node, void* data, uint level),
-                       void* data, uint level) {
+Error nodeTraversePrefix(TreeNode* node,
+                         int cb(TreeNode* node, void* data, uint level),
+                         void* data, uint level) {
 	if (!node)
         return OK;
 

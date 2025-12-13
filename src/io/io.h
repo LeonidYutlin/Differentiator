@@ -1,8 +1,8 @@
-#ifndef OUTPUT_H
-#define OUTPUT_H
+#ifndef IO_H
+#define IO_H
 
 #include <stdio.h>
-#include "tree.h"
+#include "../data_structures/tree/tree.h"
 
 void nodeToTex(FILE* tex, TreeNode* node);
 void treeToTex(FILE* tex, TreeRoot* root);

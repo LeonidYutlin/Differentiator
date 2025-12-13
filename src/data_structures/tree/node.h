@@ -7,7 +7,7 @@
 #include <math.h>
 #include <sys/types.h>
 #include "nodetype.h"
-#include "error.h"
+#include "../../misc/error.h"
 
 struct NodeUnit {
     NodeType type = UNKNOWN_TYPE;
@@ -37,12 +37,14 @@ TreeNode*  nodeDynamicInit(NodeUnit data, TreeNode* parent = NULL,
 TreeNode* nodeRead(FILE* file, Error* status = NULL, size_t* nodeCount = NULL);
 
 /// Universal infix traverse - stops if callbackFunction returns true
-int nodeTraverseInfix(TreeNode* node,
-                 int callbackFunction(TreeNode* node, void* data, uint level),
-                 void* data = NULL, uint level = 0);
-int nodeTraversePrefix (TreeNode* node,
-                        int callbackFunction(TreeNode* node, void* data, uint level),
+typedef Error (*callback_f)(TreeNode* node, void* data, uint level);
+
+Error nodeTraverseInfix(TreeNode* node,
+                        callback_f callbackFunction,
                         void* data = NULL, uint level = 0);
+Error nodeTraversePrefix (TreeNode* node,
+                          callback_f callbackFunction,
+                          void* data = NULL, uint level = 0);
 // copy-paste postfix traverses...
 
 Error nodePrintPrefix (FILE* file, TreeNode* node);

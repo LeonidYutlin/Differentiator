@@ -19,7 +19,7 @@ TreeRoot* attachRoot(TreeNode* node, Error* status) {
     return root;
 }
 
-int countNodesCallback(TreeNode* node, void* data, uint level) {
+Error countNodesCallback(TreeNode* node, void* data, uint level) {
     size_t* nodeCount = (size_t*)data;
     (*nodeCount)++;
     return 0;
@@ -79,9 +79,9 @@ TreeRoot* treeRead(FILE* file, Error* status) {
     return root;
 }
 
-int treeTraverseInfix(TreeRoot* root,
-                 int cb(TreeNode* node, void* data, uint level),
-                 void* data, uint level) {
+Error treeTraverseInfix(TreeRoot* root,
+                        int cb(TreeNode* node, void* data, uint level),
+                        void* data, uint level) {
 	if (!root)
         return OK;
 

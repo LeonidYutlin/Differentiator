@@ -1,6 +1,5 @@
-#include "node.h"
 #include "diff.h"
-#include "output.h"
+#include "../io/io.h"
 #include <assert.h>
 
 #define RETURN_WITH_STATUS(value, returnValue) \

@@ -2,7 +2,7 @@
 #define DUMP_H
 
 #include <stdio.h>
-#include "tree.h"
+#include "../tree.h"
 
 void treeDump(FILE* html, TreeRoot* root, const char* commentary, const char* filename, int line);
 void nodeDump(FILE* html, TreeNode* node, const char* commentary, const char* filename, int line);
