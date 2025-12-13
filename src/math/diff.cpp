@@ -31,6 +31,16 @@
         nodeDynamicInit({OP_TYPE, OP_DIV}, NULL, l, r)
 #define SQ_(l) \
         nodeDynamicInit({OP_TYPE, OP_POW}, NULL, l, nodeDynamicInit({NUM_TYPE, 2}))
+#define NEG_(r) \
+        nodeDynamicInit({OP_TYPE, OP_SUB}, NULL, nodeDynamicInit({NUM_TYPE, 0}), r)
+#define INV_(r) \
+        nodeDynamicInit({OP_TYPE, OP_DIV}, NULL, nodeDynamicInit({NUM_TYPE, 1}), r)
+#define CHAIN_RULE_(l) \
+        MUL_(l, D_R)
+#define SIN_(r) \
+        nodeDynamicInit({OP_TYPE, OP_SIN}, NULL, NULL, r)
+#define COS_(r) \
+        nodeDynamicInit({OP_TYPE, OP_COS}, NULL, NULL, r)
 
 static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex);
 
@@ -39,7 +49,7 @@ TreeNode* differentiate(TreeNode* node, char var, FILE* tex) {
         return NULL;
 
     if (tex) {
-        fprintf(tex, "\\raggedright\\scalebox{1.5}{A derivative of this expression is deemed quite trivial:}\\\\");
+        fprintf(tex, "A derivative of this expression is deemed quite trivial:\\\\");
         nodeToTex(tex, node);
     }
 
@@ -80,6 +90,10 @@ static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
             case OP_MUL: DUMP_TO_TEX_AND_RETURN(ADD_(MUL_(D_L, C_R), MUL_(C_L, D_R)));
             case OP_DIV: DUMP_TO_TEX_AND_RETURN(DIV_(SUB_(MUL_(C_R, D_L), MUL_(D_R, C_L)), SQ_(C_R)));
             //case OP_POW: return diffPower()
+            case OP_SIN: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(COS_(C_R)));
+            case OP_COS: DUMP_TO_TEX_AND_RETURN(NEG_(CHAIN_RULE_(SIN_(C_R))));
+            case OP_TAN: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(INV_(SQ_(COS_(C_R)))));
+            case OP_COT: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(NEG_(INV_(SIN_(C_R)))));
         }
     }
 
@@ -97,3 +111,7 @@ static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
 #undef MUL_
 #undef DIV_
 #undef SQ_
+#undef INV_
+#undef NEG_
+#undef SIN_
+#undef COS_

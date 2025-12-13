@@ -32,7 +32,7 @@ int main() {
     FILE* log = initHtmlLogFile();
     FILE* tex = initTexLogFile();
 
-    FILE* expr = fopen(".test/expr3.txt", "r");
+    FILE* expr = fopen(".test/expr4.txt", "r");
     TreeRoot* tree = treeRead(expr);
     if (!tree) {
         fprintf(stderr, "IT IS NULL\n");

@@ -19,6 +19,10 @@ enum OpType {
     OP_MUL,
     OP_DIV,
     OP_POW,
+    OP_SIN,
+    OP_COS,
+    OP_TAN,
+    OP_COT,
 };
 
 const char* getNodeTypeString(NodeType type);

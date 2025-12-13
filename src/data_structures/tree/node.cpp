@@ -84,7 +84,7 @@ TreeNode* nodeRead(FILE* f, Error* status, size_t* nodeCount) {
 #define SKIP_WHITESPACE \
         while (isspace(buf[*pos])) { \
             (*pos)++; \
-        } \
+        }
 
 static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
                                    Error* status, size_t* nodeCount) {
@@ -162,6 +162,7 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
             DUMP_ERROR_RETURN("Node has too few or too many null children!");
         }
 
+        //fprintf(stderr, "Pos is %lu BufSize is %lu\n", *pos, bufSize);
         SKIP_WHITESPACE;
         if (buf[*pos] == ')') {
             (*pos)++;

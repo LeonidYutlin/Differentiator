@@ -18,6 +18,10 @@ const char* getOpTypeString(OpType type) {
         case OP_MUL: return "*";
         case OP_DIV: return "/";
         case OP_POW: return "^";
+        case OP_SIN: return "sin";
+        case OP_COS: return "cos";
+        case OP_TAN: return "tan";
+        case OP_COT: return "cot";
         default:     return "UNKNOWN TYPE ERROR";
     }
     return "UNKNOWN TYPE ERROR";
@@ -34,6 +38,14 @@ int getOpType(const char* str) {
         return OP_DIV;
     if (strcmp(str, "^") == 0)
         return OP_POW;
+    if (strcmp(str, "sin") == 0)
+        return OP_SIN;
+    if (strcmp(str, "cos") == 0)
+        return OP_COS;
+    if (strcmp(str, "tan") == 0)
+        return OP_TAN;
+    if (strcmp(str, "cot") == 0)
+        return OP_COT;
     return -1;
 }
 
@@ -43,8 +55,12 @@ uint getOpTypeArgumentCount(OpType type) {
         case OP_SUB:
         case OP_MUL:
         case OP_DIV:
-        case OP_POW:   return 2;
-        default:         return 2;
+        case OP_POW: return 2;
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_COT: return 1;
+        default:     return 2;
     }
     return 0;
 }
@@ -55,7 +71,11 @@ uint getOpTypePriority(OpType type) {
         case OP_SUB: return 1;
         case OP_MUL:
         case OP_DIV: return 2;
-        case OP_POW: return 3;
+        case OP_POW:
+        case OP_SIN:
+        case OP_COS:
+        case OP_TAN:
+        case OP_COT: return 3;
         default:     return 0;
     }
     return 0;
