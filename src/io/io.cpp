@@ -43,7 +43,7 @@ TreeNode* differentiationStepToTex(FILE* f, char var, TreeNode* before, TreeNode
             stepCount, var);
     size_t writtenCount = 0;
     nodeToTexTraverse(before, f, &writtenCount);
-    fprintf(f, " = ");
+    fputs(" = ", f);
     nodeToTexTraverse(after, f, &writtenCount);
     fputs("\n\\end{align*}\\\\\n", f);
     return after;
@@ -102,48 +102,93 @@ void closeTexLogFile(FILE* file) {
     fclose(file);
 }
 
+#define ADD_TO_COUNT(x) \
+        { \
+        if (writtenCount) \
+            *writtenCount += x; \
+        }
+
 static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
 	if (!node || !f)
         return;
 
+    // i dont use macros's IS_OP and IS_NUM because they will contain unneccessary null checks
     bool needsBrackets = (node->parent &&
-                         ((node->data.type == NUM_TYPE && node->data.value < 0) ||
-                         (node->data.type == OP_TYPE && compareParentPriority(node))));
-    bool isDivision = (node->data.type == OP_TYPE &&
-                       (OpType)node->data.value == OP_DIV);
+                          ((node->data.type == NUM_TYPE && node->data.value < 0) ||
+                          (node->data.type == OP_TYPE && compareParentPriority(node))));
+    bool isDivision = OP_OF(node, OP_DIV);
+    // is this an expression of type (smth)^(1/number)
+    bool isRoot     = (!isDivision &&
+                       OP_OF(node, OP_POW) &&
+                       OP_OF(node->right, OP_DIV) &&
+                       NUM_OF(node->right->left, 1) &&
+                       IS_NUM(node->right->left));
 
     if (writtenCount && *writtenCount > MAX_CHAR_PER_LINE) {
-        fprintf(f, "\\\\\n");
+        fputs("\\\\\n", f);
         *writtenCount = 0;
     }
 
-    if (needsBrackets) { fprintf(f, "("); if (writtenCount) (*writtenCount)++; }
-    if (isDivision)      fprintf(f, "\\frac{");
-	nodeToTexTraverse(node->left, f, isDivision ? NULL : writtenCount);
-    if (isDivision) {
-        fputc('}', f);
-    } else if (node->data.type == NUM_TYPE) {
-        size_t written = 0;
-        fprintf(f, "%lg%ln", node->data.value, (long*)&written);
-        if (writtenCount) *writtenCount += written;
-    } else if (node->data.type == VAR_TYPE) {
-        fprintf(f, "%c", (int)node->data.value);
-        if (writtenCount) (*writtenCount)++;
-    } else {
-        OpType opType = (OpType)node->data.value;
-        if (!(opType == OP_MUL &&
-              node->right &&
-              node->right->data.type == VAR_TYPE)) {
-            const char* opStr = getOpTypeString(opType);
-            fprintf(f, "%s", opStr);
-            if (writtenCount) (*writtenCount) += strlen(opStr);
-        }
+    if (needsBrackets) {
+        fputc('(', f);
+        ADD_TO_COUNT(1);
     }
-    if (isDivision)    fputc('{', f);
-    nodeToTexTraverse(node->right, f, isDivision ? NULL : writtenCount);
-    if (isDivision)    fputc('}', f);
-    if (needsBrackets) { fprintf(f, ")"); if (writtenCount) (*writtenCount)++; }
+
+    if (isDivision) {
+        fputs("\\frac{", f);
+        nodeToTexTraverse(node->left, f, NULL);
+        fputs("}{", f);
+        nodeToTexTraverse(node->right, f, NULL);
+        fputc('}', f);
+    } else if (isRoot) {
+        fputs("\\sqrt[", f);
+        nodeToTexTraverse(node->right->right, f, writtenCount);
+        fputs("]{", f);
+        nodeToTexTraverse(node->left, f, writtenCount);
+        fputc('}', f);
+    } else {
+	    nodeToTexTraverse(node->left, f, writtenCount);
+        switch (node->data.type) {
+            case NUM_TYPE:
+                {
+                    size_t written = 0;
+                    fprintf(f, "%lg%ln", node->data.value, (long*)&written);
+                    ADD_TO_COUNT(written);
+                };
+                break;
+            case VAR_TYPE:
+                fprintf(f, "%c", (int)node->data.value);
+                ADD_TO_COUNT(1);
+                break;
+            case OP_TYPE:
+                {
+                    OpType opType = (OpType)node->data.value;
+                    if (!(opType == OP_MUL &&
+                          node->right &&
+                          node->right->data.type == VAR_TYPE)) {
+                        const char* opStr = getOpTypeString(opType);
+                        bool isSupportedFunc = (opType == OP_COS ||
+                                                opType == OP_SIN ||
+                                                opType == OP_TAN ||
+                                                opType == OP_COT);
+                        fprintf(f, "%s%s", isSupportedFunc ? "\\" : "", opStr);
+                        ADD_TO_COUNT(strlen(opStr));
+                    }
+                };
+                break;
+            default:
+                fputs("Error: unknown node type", f);
+        }
+        nodeToTexTraverse(node->right, f, writtenCount);
+    }
+
+    if (needsBrackets) {
+        fputc(')', f);
+        ADD_TO_COUNT(1);
+    }
 }
+
+#undef ADD_TO_COUNT
 
 static bool compareParentPriority(TreeNode* node) {
     assert(node);

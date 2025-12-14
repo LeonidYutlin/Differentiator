@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <sys/types.h>
+#include "../../misc/util.h"
 
 const size_t MAX_VALUE_STRING_LENGTH = 16;
 
@@ -24,6 +25,22 @@ enum OpType {
     OP_TAN,
     OP_COT,
 };
+
+#define IS_OP(node) \
+    (node && \
+     node->data.type == OP_TYPE)
+
+#define IS_NUM(node) \
+    (node && \
+     node->data.type == NUM_TYPE)
+
+#define OP_OF(node, opType) \
+    (IS_OP(node) && \
+     (OpType)node->data.value == opType)
+
+#define NUM_OF(node, i) \
+    (IS_NUM(node) && \
+     doubleEqual(node->data.value, i))
 
 const char* getNodeTypeString(NodeType type);
 const char* getOpTypeString(OpType type);

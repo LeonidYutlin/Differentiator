@@ -5,6 +5,11 @@
 #include <sys/stat.h>
 
 static const size_t MAX_TIMESTAMPED_FILE_PATH_LENGTH = 128;
+static const double DOUBLE_COMPARISON_PRECISION = 1e-9;
+
+bool doubleEqual(double a, double b) {
+    return fabs(a - b) < DOUBLE_COMPARISON_PRECISION;
+}
 
 char* getTimestampedString(const char* prefix, const char* suffix, uint count) {
     time_t timeAbs = time(NULL);

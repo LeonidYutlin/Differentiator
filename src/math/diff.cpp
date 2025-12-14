@@ -35,6 +35,8 @@
         nodeDynamicInit({OP_TYPE, OP_SUB}, NULL, nodeDynamicInit({NUM_TYPE, 0}), r)
 #define INV_(r) \
         nodeDynamicInit({OP_TYPE, OP_DIV}, NULL, nodeDynamicInit({NUM_TYPE, 1}), r)
+#define NEG_INV_(r) \
+        nodeDynamicInit({OP_TYPE, OP_DIV}, NULL, nodeDynamicInit({NUM_TYPE, -1}), r)
 #define CHAIN_RULE_(l) \
         MUL_(l, D_R)
 #define SIN_(r) \
@@ -49,7 +51,7 @@ TreeNode* differentiate(TreeNode* node, char var, FILE* tex) {
         return NULL;
 
     if (tex) {
-        fprintf(tex, "A derivative of this expression is deemed quite trivial:\\\\");
+        fputs("A derivative of this expression is deemed quite trivial:\\\\", tex);
         nodeToTex(tex, node);
     }
 
@@ -93,7 +95,7 @@ static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
             case OP_SIN: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(COS_(C_R)));
             case OP_COS: DUMP_TO_TEX_AND_RETURN(NEG_(CHAIN_RULE_(SIN_(C_R))));
             case OP_TAN: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(INV_(SQ_(COS_(C_R)))));
-            case OP_COT: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(NEG_(INV_(SIN_(C_R)))));
+            case OP_COT: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(NEG_INV_(SIN_(C_R))));
         }
     }
 
@@ -113,5 +115,6 @@ static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
 #undef SQ_
 #undef INV_
 #undef NEG_
+#undef NEG_INV_
 #undef SIN_
 #undef COS_

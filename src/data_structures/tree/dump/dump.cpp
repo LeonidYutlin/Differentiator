@@ -99,20 +99,20 @@ void nodeDump(FILE* f, TreeNode* node, const char* commentary, const char* filen
 
     char* dotPath = getTimestampedString(".log/dot-", ".txt", callCount);
     if (!dotPath) {
-        fprintf(f, "<h1><b>Dot file name composition failed for this graph dump</h1><b>\n");
+        fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
         return;
     }
 
     FILE* dot = fopen(dotPath, "w");
     if (!dot) {
-        fprintf(f, "<h1><b>Dot file open failed for this graph dump</h1><b>\n");
+        fputs("<h1><b>Dot file open failed for this graph dump</h1><b>\n", f);
         free(dotPath);
         return;
     }
 
     DOT_HEADER_INIT(dot);
     populateDot(dot, node);
-    fprintf(dot, "}\n");
+    fputs("}\n", dot);
     fclose(dot);
 
     fputs("Graphical Dump:\n", f);
@@ -182,13 +182,13 @@ static int treeGraphDump(FILE* f, TreeRoot* root, uint callCount) {
 
     char* dotPath = getTimestampedString(".log/dot-", ".txt", callCount);
     if (!dotPath) {
-        fprintf(f, "<h1><b>Dot file name composition failed for this graph dump</h1><b>\n");
+        fputs("<h1><b>Dot file name composition failed for this graph dump</h1><b>\n", f);
         return -1;
     }
 
     FILE* dot = fopen(dotPath, "w");
     if (!dot) {
-        fprintf(f, "<h1><b>Dot file open failed for this graph dump</h1><b>\n");
+        fputs("<h1><b>Dot file open failed for this graph dump</h1><b>\n", f);
         free(dotPath);
         return -1;
     }
@@ -227,7 +227,7 @@ static int treeGraphDump(FILE* f, TreeRoot* root, uint callCount) {
     populateDot(dot, root->rootNode);
 
     fprintf(dot, "root -> node%p [color=\"%s\"]\n", root->rootNode, OK_EDGE);
-    fprintf(dot, "}\n");
+    fputs("}\n", dot);
     fclose(dot);
 
     fputs("Graphical Dump:\n", f);
@@ -325,7 +325,7 @@ static void declareRank(FILE* dot, TreeNode* node, Queue** queue) {
     assert(node);
     assert(queue);
 
-    fprintf(dot, "{ rank = same; ");
+    fputs("{ rank = same; ", dot);
     Queue* newQueue = NULL;
     TreeNode* cur = node;
     do {
@@ -335,7 +335,7 @@ static void declareRank(FILE* dot, TreeNode* node, Queue** queue) {
         if (cur->right)
             enqueue(&newQueue, cur->right);
     } while (!dequeue(queue, &cur));
-    fprintf(dot, "}\n");
+    fputs("}\n", dot);
     if (!dequeue(&newQueue, &cur))
         declareRank(dot, cur, &newQueue);
 }

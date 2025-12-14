@@ -22,7 +22,7 @@ TreeRoot* attachRoot(TreeNode* node, Error* status) {
 Error countNodesCallback(TreeNode* node, void* data, uint level) {
     size_t* nodeCount = (size_t*)data;
     (*nodeCount)++;
-    return 0;
+    return OK;
 }
 
 Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
