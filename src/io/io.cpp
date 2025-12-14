@@ -112,13 +112,17 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
 	if (!node || !f)
         return;
 
-    // i dont use macros's IS_OP and IS_NUM because they will contain unneccessary null checks
     bool needsBrackets = (node->parent &&
-                          ((node->data.type == NUM_TYPE && node->data.value < 0) ||
-                          (node->data.type == OP_TYPE && compareParentPriority(node))));
+                          ((IS_NUM(node) && node->data.value < 0) ||
+                           (IS_SUPPORTED_FUNC((OpType)node->parent->data.value) &&
+                            !(OP_OF(node->parent, OP_LOG) && (node == node->parent->left))) ||
+                           (IS_OP(node) && compareParentPriority(node))));
     bool isDivision = OP_OF(node, OP_DIV);
+    bool isLog      = (!isDivision &&
+                       OP_OF(node, OP_LOG));
     // is this an expression of type (smth)^(1/number)
     bool isRoot     = (!isDivision &&
+                       !isLog &&
                        OP_OF(node, OP_POW) &&
                        OP_OF(node->right, OP_DIV) &&
                        NUM_OF(node->right->left, 1) &&
@@ -140,6 +144,11 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
         fputs("}{", f);
         nodeToTexTraverse(node->right, f, NULL);
         fputc('}', f);
+    } else if (isLog) {
+        fputs("\\log_{", f);
+        nodeToTexTraverse(node->left, f, writtenCount);
+        fputs("}", f);
+        nodeToTexTraverse(node->right, f, writtenCount);
     } else if (isRoot) {
         fputs("\\sqrt[", f);
         nodeToTexTraverse(node->right->right, f, writtenCount);
@@ -167,11 +176,7 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
                           node->right &&
                           node->right->data.type == VAR_TYPE)) {
                         const char* opStr = getOpTypeString(opType);
-                        bool isSupportedFunc = (opType == OP_COS ||
-                                                opType == OP_SIN ||
-                                                opType == OP_TAN ||
-                                                opType == OP_COT);
-                        fprintf(f, "%s%s", isSupportedFunc ? "\\" : "", opStr);
+                        fprintf(f, "%s%s", IS_SUPPORTED_FUNC(opType) ? "\\" : "", opStr);
                         ADD_TO_COUNT(strlen(opStr));
                     }
                 };
@@ -179,7 +184,10 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
             default:
                 fputs("Error: unknown node type", f);
         }
+        bool isPow = OP_OF(node, OP_POW);
+        if (isPow) fputc('{', f);
         nodeToTexTraverse(node->right, f, writtenCount);
+        if (isPow) fputc('}', f);
     }
 
     if (needsBrackets) {
@@ -201,9 +209,12 @@ static bool compareParentPriority(TreeNode* node) {
     //         ? false
     //         : getOpTypePriority(parentType) > getOpTypePriority(ownType));
 
-
-    return ownType == OP_DIV || parentType == OP_DIV
-           ? false
-           : getOpTypePriority(parentType) > getOpTypePriority(ownType);
+    if (ownType == OP_DIV ||
+        parentType == OP_DIV)
+        return false;
+    if (parentType == OP_LOG &&
+        node->parent->left == node)
+        return false;
+    return getOpTypePriority(parentType) > getOpTypePriority(ownType);
 }
 

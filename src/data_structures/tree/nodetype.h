@@ -24,6 +24,8 @@ enum OpType {
     OP_COS,
     OP_TAN,
     OP_COT,
+    OP_LOG,
+    OP_LN,
 };
 
 #define IS_OP(node) \
@@ -41,6 +43,14 @@ enum OpType {
 #define NUM_OF(node, i) \
     (IS_NUM(node) && \
      doubleEqual(node->data.value, i))
+
+#define IS_SUPPORTED_FUNC(opType) \
+        (opType == OP_COS || \
+         opType == OP_SIN || \
+         opType == OP_TAN || \
+         opType == OP_COT || \
+         opType == OP_LOG || \
+         opType == OP_LN)
 
 const char* getNodeTypeString(NodeType type);
 const char* getOpTypeString(OpType type);

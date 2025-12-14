@@ -32,7 +32,7 @@
 #define SQ_(l) \
         nodeDynamicInit({OP_TYPE, OP_POW}, NULL, l, nodeDynamicInit({NUM_TYPE, 2}))
 #define NEG_(r) \
-        nodeDynamicInit({OP_TYPE, OP_SUB}, NULL, nodeDynamicInit({NUM_TYPE, 0}), r)
+        nodeDynamicInit({OP_TYPE, OP_MUL}, NULL, nodeDynamicInit({NUM_TYPE, -1}), r)
 #define INV_(r) \
         nodeDynamicInit({OP_TYPE, OP_DIV}, NULL, nodeDynamicInit({NUM_TYPE, 1}), r)
 #define NEG_INV_(r) \
@@ -43,6 +43,8 @@
         nodeDynamicInit({OP_TYPE, OP_SIN}, NULL, NULL, r)
 #define COS_(r) \
         nodeDynamicInit({OP_TYPE, OP_COS}, NULL, NULL, r)
+#define LN_(r) \
+        nodeDynamicInit({OP_TYPE, OP_LN}, NULL, NULL, r)
 
 static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex);
 
@@ -95,7 +97,9 @@ static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
             case OP_SIN: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(COS_(C_R)));
             case OP_COS: DUMP_TO_TEX_AND_RETURN(NEG_(CHAIN_RULE_(SIN_(C_R))));
             case OP_TAN: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(INV_(SQ_(COS_(C_R)))));
-            case OP_COT: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(NEG_INV_(SIN_(C_R))));
+            case OP_COT: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(NEG_INV_(SQ_(SIN_(C_R)))));
+            case OP_LOG: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(INV_(MUL_(C_R, LN_(C_L)))));
+            case OP_LN : DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_(INV_(C_R)));
         }
     }
 
@@ -118,3 +122,4 @@ static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
 #undef NEG_INV_
 #undef SIN_
 #undef COS_
+#undef LN_
