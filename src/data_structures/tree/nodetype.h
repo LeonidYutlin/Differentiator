@@ -26,6 +26,14 @@ enum OpType {
     OP_COT,
     OP_LOG,
     OP_LN,
+    OP_ASIN,
+    OP_ACOS,
+    OP_ATAN,
+    OP_ACOT,
+    OP_SINH,
+    OP_COSH,
+    OP_TANH,
+    OP_COTH,
 };
 
 #define IS_OP(node) \
@@ -36,6 +44,10 @@ enum OpType {
     (node && \
      node->data.type == NUM_TYPE)
 
+#define IS_VAR(node) \
+    (node && \
+     node->data.type == VAR_TYPE)
+
 #define OP_OF(node, opType) \
     (IS_OP(node) && \
      (OpType)node->data.value == opType)
@@ -44,13 +56,26 @@ enum OpType {
     (IS_NUM(node) && \
      doubleEqual(node->data.value, i))
 
+#define VAR_OF(node, i) \
+    (IS_VAR(node) && \
+     (char)node->data.value == i)
+
+//TODO more easier non-obvious check (for example priority is 3 but not power)
 #define IS_SUPPORTED_FUNC(opType) \
-        (opType == OP_COS || \
-         opType == OP_SIN || \
-         opType == OP_TAN || \
-         opType == OP_COT || \
-         opType == OP_LOG || \
-         opType == OP_LN)
+        (opType == OP_COS  || \
+         opType == OP_SIN  || \
+         opType == OP_TAN  || \
+         opType == OP_COT  || \
+         opType == OP_LOG  || \
+         opType == OP_LN   || \
+         opType == OP_ASIN || \
+         opType == OP_ACOS || \
+         opType == OP_ATAN || \
+         opType == OP_ACOT || \
+         opType == OP_SINH || \
+         opType == OP_COSH || \
+         opType == OP_TANH || \
+         opType == OP_COTH)
 
 const char* getNodeTypeString(NodeType type);
 const char* getOpTypeString(OpType type);

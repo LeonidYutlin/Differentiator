@@ -19,12 +19,6 @@ TreeRoot* attachRoot(TreeNode* node, Error* status) {
     return root;
 }
 
-Error countNodesCallback(TreeNode* node, void* data, uint level) {
-    size_t* nodeCount = (size_t*)data;
-    (*nodeCount)++;
-    return OK;
-}
-
 Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
                     TreeNode* left, TreeNode* right) {
     if (!root || !node)

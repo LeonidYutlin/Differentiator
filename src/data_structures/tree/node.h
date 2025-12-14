@@ -45,6 +45,9 @@ Error nodeTraverseInfix(TreeNode* node,
 Error nodeTraversePrefix (TreeNode* node,
                           callback_f callbackFunction,
                           void* data = NULL, uint level = 0);
+
+Error countNodesCallback(TreeNode* node, void* data, uint level);
+Error findVariableCallback(TreeNode* node, void* data, uint level);
 // copy-paste postfix traverses...
 
 Error nodePrintPrefix (FILE* file, TreeNode* node);

@@ -325,4 +325,18 @@ Error nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
     return OK;
 }
 
+Error countNodesCallback(TreeNode* node, void* data, uint level) {
+    size_t* nodeCount = (size_t*)data;
+    (*nodeCount)++;
+    return OK;
+}
+
+// here non-zero return is treated as found variable
+Error findVariableCallback(TreeNode* node, void* data, uint level) {
+    char* var = (char*)data;
+    if (VAR_OF(node, *var))
+        return 1;
+    return OK;
+}
+
 #undef RETURN_WITH_STATUS

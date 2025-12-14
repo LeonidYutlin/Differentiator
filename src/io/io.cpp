@@ -6,10 +6,12 @@
 #include <assert.h>
 #include <string.h>
 
-static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount);
+static void nodeToTexTraverse(TreeNode* node, FILE* f,
+                              size_t* writtenCount,
+                              bool suppressBrackets = false, bool suppressNewline = false);
 static bool compareParentPriority(TreeNode* node);
 static uint stepCount = 0;
-static const size_t MAX_CHAR_PER_LINE = 64;
+static const size_t MAX_CHAR_PER_LINE = 54;
 
 void nodeToTex(FILE* f, TreeNode* node) {
     assert(f);
@@ -82,6 +84,7 @@ FILE* initTexLogFile() {
             "\\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref}"
             "\\usepackage{enumitem}"
             "\\geometry{a4paper, margin=1in}"
+            "\\DeclareMathOperator{\\arccot}{arccot}"
             "\\begin{document}"
             "\\section{Differentiating stuff}"
             "%s\\\\"
@@ -105,17 +108,18 @@ void closeTexLogFile(FILE* file) {
 #define ADD_TO_COUNT(x) \
         { \
         if (writtenCount) \
-            *writtenCount += x; \
+            *writtenCount += (size_t)x; \
         }
 
-static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
+static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
+                              bool suppressBrackets, bool suppressNewline) {
 	if (!node || !f)
         return;
 
     bool needsBrackets = (node->parent &&
+                          !suppressBrackets &&
                           ((IS_NUM(node) && node->data.value < 0) ||
-                           (IS_SUPPORTED_FUNC((OpType)node->parent->data.value) &&
-                            !(OP_OF(node->parent, OP_LOG) && (node == node->parent->left))) ||
+                            IS_SUPPORTED_FUNC((OpType)node->parent->data.value) ||
                            (IS_OP(node) && compareParentPriority(node))));
     bool isDivision = OP_OF(node, OP_DIV);
     bool isLog      = (!isDivision &&
@@ -128,11 +132,6 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
                        NUM_OF(node->right->left, 1) &&
                        IS_NUM(node->right->left));
 
-    if (writtenCount && *writtenCount > MAX_CHAR_PER_LINE) {
-        fputs("\\\\\n", f);
-        *writtenCount = 0;
-    }
-
     if (needsBrackets) {
         fputc('(', f);
         ADD_TO_COUNT(1);
@@ -140,28 +139,32 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
 
     if (isDivision) {
         fputs("\\frac{", f);
-        nodeToTexTraverse(node->left, f, NULL);
+        nodeToTexTraverse(node->left, f, writtenCount, true, true);
         fputs("}{", f);
-        nodeToTexTraverse(node->right, f, NULL);
+        nodeToTexTraverse(node->right, f, writtenCount, true, true);
         fputc('}', f);
     } else if (isLog) {
         fputs("\\log_{", f);
-        nodeToTexTraverse(node->left, f, writtenCount);
+        nodeToTexTraverse(node->left, f, writtenCount, true, true);
         fputs("}", f);
-        nodeToTexTraverse(node->right, f, writtenCount);
+        nodeToTexTraverse(node->right, f, writtenCount, false, suppressNewline);
     } else if (isRoot) {
-        fputs("\\sqrt[", f);
-        nodeToTexTraverse(node->right->right, f, writtenCount);
-        fputs("]{", f);
-        nodeToTexTraverse(node->left, f, writtenCount);
+        if (doubleEqual(node->right->right->data.value, 2)) {
+            fputs("\\sqrt{", f);
+        } else {
+            fputs("\\sqrt[", f);
+            nodeToTexTraverse(node->right->right, f, writtenCount, true, true);
+            fputs("]{", f);
+        }
+        nodeToTexTraverse(node->left, f, writtenCount, true, true);
         fputc('}', f);
     } else {
-	    nodeToTexTraverse(node->left, f, writtenCount);
+	    nodeToTexTraverse(node->left, f, writtenCount, suppressNewline);
         switch (node->data.type) {
             case NUM_TYPE:
                 {
-                    size_t written = 0;
-                    fprintf(f, "%lg%ln", node->data.value, (long*)&written);
+                    long written = 0;
+                    fprintf(f, "%lg%ln", node->data.value, &written);
                     ADD_TO_COUNT(written);
                 };
                 break;
@@ -175,9 +178,11 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
                     if (!(opType == OP_MUL &&
                           node->right &&
                           node->right->data.type == VAR_TYPE)) {
+                        long written = 0;
                         const char* opStr = getOpTypeString(opType);
-                        fprintf(f, "%s%s", IS_SUPPORTED_FUNC(opType) ? "\\" : "", opStr);
-                        ADD_TO_COUNT(strlen(opStr));
+                        fprintf(f, "%s%s%ln",
+                                IS_SUPPORTED_FUNC(opType) ? "\\" : "", opStr, &written);
+                        ADD_TO_COUNT(written);
                     }
                 };
                 break;
@@ -186,13 +191,21 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount) {
         }
         bool isPow = OP_OF(node, OP_POW);
         if (isPow) fputc('{', f);
-        nodeToTexTraverse(node->right, f, writtenCount);
+        nodeToTexTraverse(node->right, f, writtenCount, isPow, isPow || suppressNewline);
         if (isPow) fputc('}', f);
     }
 
     if (needsBrackets) {
         fputc(')', f);
         ADD_TO_COUNT(1);
+    }
+    if (!suppressNewline &&
+        writtenCount &&
+        *writtenCount > MAX_CHAR_PER_LINE) {
+        // fprintf(stderr, "Putting a newline! Currently i am inside %s (%lf) and my suppressNewline is %d\n",
+        //         getOpTypeString((OpType)node->data.value), node->data.value, suppressNewline);
+        fputs("\\\\\n", f);
+        *writtenCount = 0;
     }
 }
 
@@ -202,19 +215,7 @@ static bool compareParentPriority(TreeNode* node) {
     assert(node);
     OpType parentType = (OpType)node->parent->data.value;
     OpType ownType    = (OpType)node->data.value;
-    // fprintf(stderr,
-    //         "called to compare parent %s and child %s, the result is %d\n",
-    //         getOpTypeString(parentType), getOpTypeString(ownType),
-    //         ownType == OP_DIV || parentType == OP_DIV
-    //         ? false
-    //         : getOpTypePriority(parentType) > getOpTypePriority(ownType));
 
-    if (ownType == OP_DIV ||
-        parentType == OP_DIV)
-        return false;
-    if (parentType == OP_LOG &&
-        node->parent->left == node)
-        return false;
     return getOpTypePriority(parentType) > getOpTypePriority(ownType);
 }
 
