@@ -1,4 +1,4 @@
-#include "node.h"
+#include "tree.h"
 #include "../../misc/util.h"
 #include <stdlib.h>
 #include <ctype.h>
@@ -9,6 +9,8 @@ static size_t NULL_STRING_REPRESENTATION_LENGTH = strlen(NULL_STRING_REPRESENTAT
 
 static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
                                    Error* status, size_t* nodeCount);
+static Error nodeOptimizeConstants(TreeNode** node,size_t* nodeCount);
+static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
 
 #define RETURN_WITH_STATUS(value, returnValue) \
         { \
@@ -290,6 +292,39 @@ void nodeFixParents(TreeNode* node) {
         node->right->parent = node;
         nodeFixParents(node->right);
     }
+}
+
+Error nodeOptimize(TreeNode** node) {
+    if (!node ||
+        !*node)
+        return InvalidParameters;
+
+    Error returnedStatus = OK;
+    TreeRoot* root = attachRoot(*node, &returnedStatus);
+    if (returnedStatus)
+        return returnedStatus;
+    size_t prevNodeCount = 0;
+    do {
+        prevNodeCount = root->nodeCount;
+        nodeOptimizeConstants(node);
+        nodeOptimizeNeutral(node);
+    } while (prevNodeCount != root->nodeCount);
+
+    TreeNode* temp = detachRoot(root, &returnedStatus);
+    if (returnedStatus)
+        return returnedStatus;
+    *node = temp;
+    return OK;
+}
+
+static Error nodeOptimizeConstants(TreeNode** node, size_t* nodeCount) {
+    if (!node ||
+        !*node)
+        return InvalidParameters;
+
+    ////
+
+    return OK;
 }
 
 Error nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {

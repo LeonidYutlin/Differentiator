@@ -19,6 +19,16 @@ TreeRoot* attachRoot(TreeNode* node, Error* status) {
     return root;
 }
 
+TreeNode* detachRoot(TreeRoot* root, Error* status) {
+    if (!root)
+        RETURN_WITH_STATUS(InvalidParameters, NULL);
+
+    TreeNode* node = root->rootNode;
+    root->rootNode = NULL;
+    treeDestroy(root, true);
+    return node;
+}
+
 Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
                     TreeNode* left, TreeNode* right) {
     if (!root || !node)

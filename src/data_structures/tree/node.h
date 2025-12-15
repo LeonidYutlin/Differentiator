@@ -57,6 +57,7 @@ Error nodePrintPostfix(FILE* file, TreeNode* node);
 ///Note: doesnt copy the parent field but instead assigns newParent as copy's parent
 TreeNode*  nodeCopy(TreeNode* srcNode, TreeNode* newParent, Error* status = NULL);
 void nodeFixParents(TreeNode* node);
+Error nodeOptimize(TreeNode** node);
 
 Error  nodeDelete(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
 Error nodeDestroy(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);

@@ -29,17 +29,12 @@ void nodeToTex(FILE* f, TreeNode* node) {
 TreeNode* differentiationStepToTex(FILE* f, char var, TreeNode* before, TreeNode* after) {
     assert(f);
     nodeFixParents(after);
+    after = nodeOptimize(after);
 
     ++stepCount;
     size_t nodeCount = 0;
     nodeTraverseInfix(before, countNodesCallback, &nodeCount);
     nodeTraverseInfix(after, countNodesCallback, &nodeCount);
-    // double shrinkCoefficient = ((double)nodeCount - 40) * 0.002;
-    // double size = 2.0 * (1 - (shrinkCoefficient < 0 ? 0 : shrinkCoefficient));
-
-    // fprintf(f,
-    //         "\\raggedright\\scalebox{1.5}{(%u):}\\begin{align*}\\scalebox{%lg}{$ \\frac{d}{d%c}",
-    //         stepCount, size, var);
     fprintf(f,
             "\\raggedright(%u):\\begin{align*}\n\\frac{d}{d%c}",
             stepCount, var);
@@ -77,10 +72,6 @@ FILE* initTexLogFile() {
             "\\usepackage{amsmath}"
             "\\usepackage{geometry}"
             "\\usepackage{graphicx}"
-            //"\\usepackage{breqn}"
-            // "\\usepackage[T2A]{fontenc}"
-            // "\\usepackage[utf8]{inputenc}"
-            // "\\usepackage[english,russian]{babel}"
             "\\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref}"
             "\\usepackage{enumitem}"
             "\\geometry{a4paper, margin=1in}"

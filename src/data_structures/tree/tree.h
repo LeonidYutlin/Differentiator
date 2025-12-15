@@ -13,6 +13,7 @@ struct TreeRoot {
 };
 
 TreeRoot* attachRoot(TreeNode* node, Error* status = NULL);
+TreeNode* detachRoot(TreeRoot* root, Error* status = NULL);
 Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
                     TreeNode* left = NULL, TreeNode* right = NULL);
 TreeRoot*  treeDynamicInit(NodeUnit data,
