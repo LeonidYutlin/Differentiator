@@ -29,7 +29,6 @@ void nodeToTex(FILE* f, TreeNode* node) {
 TreeNode* differentiationStepToTex(FILE* f, char var, TreeNode* before, TreeNode* after) {
     assert(f);
     nodeFixParents(after);
-    after = nodeOptimize(after);
 
     ++stepCount;
     size_t nodeCount = 0;
@@ -41,6 +40,9 @@ TreeNode* differentiationStepToTex(FILE* f, char var, TreeNode* before, TreeNode
     size_t writtenCount = 0;
     nodeToTexTraverse(before, f, &writtenCount);
     fputs(" = ", f);
+    nodeToTexTraverse(after, f, &writtenCount);
+    fputs(" = ", f);
+    nodeOptimize(&after);
     nodeToTexTraverse(after, f, &writtenCount);
     fputs("\n\\end{align*}\\\\\n", f);
     return after;
@@ -112,15 +114,15 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
                           ((IS_NUM(node) && node->data.value < 0) ||
                             IS_SUPPORTED_FUNC((OpType)node->parent->data.value) ||
                            (IS_OP(node) && compareParentPriority(node))));
-    bool isDivision = OP_OF(node, OP_DIV);
+    bool isDivision = OF_OP(node, OP_DIV);
     bool isLog      = (!isDivision &&
-                       OP_OF(node, OP_LOG));
+                       OF_OP(node, OP_LOG));
     // is this an expression of type (smth)^(1/number)
     bool isRoot     = (!isDivision &&
                        !isLog &&
-                       OP_OF(node, OP_POW) &&
-                       OP_OF(node->right, OP_DIV) &&
-                       NUM_OF(node->right->left, 1) &&
+                       OF_OP(node, OP_POW) &&
+                       OF_OP(node->right, OP_DIV) &&
+                       OF_NUM(node->right->left, 1) &&
                        IS_NUM(node->right->left));
 
     if (needsBrackets) {
@@ -150,37 +152,38 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
         nodeToTexTraverse(node->left, f, writtenCount, true, true);
         fputc('}', f);
     } else {
+        bool isPow = OF_OP(node, OP_POW);
+        if (isPow) fputc('{', f);
 	    nodeToTexTraverse(node->left, f, writtenCount, suppressNewline);
+        if (isPow) fputc('}', f);
         switch (node->data.type) {
-            case NUM_TYPE:
-                {
-                    long written = 0;
-                    fprintf(f, "%lg%ln", node->data.value, &written);
-                    ADD_TO_COUNT(written);
-                };
-                break;
-            case VAR_TYPE:
+            case NUM_TYPE: {
+                long written = 0;
+                fprintf(f, "%lg%ln", node->data.value, &written);
+                ADD_TO_COUNT(written);
+            }
+            break;
+            case VAR_TYPE: {
                 fprintf(f, "%c", (int)node->data.value);
                 ADD_TO_COUNT(1);
-                break;
-            case OP_TYPE:
-                {
-                    OpType opType = (OpType)node->data.value;
-                    if (!(opType == OP_MUL &&
-                          node->right &&
-                          node->right->data.type == VAR_TYPE)) {
-                        long written = 0;
-                        const char* opStr = getOpTypeString(opType);
-                        fprintf(f, "%s%s%ln",
+            }
+            break;
+            case OP_TYPE: {
+                OpType opType = (OpType)node->data.value;
+                if (!(opType == OP_MUL &&
+                    node->right &&
+                    node->right->data.type == VAR_TYPE)) {
+                    long written = 0;
+                    const char* opStr = getOpTypeString(opType);
+                    fprintf(f, "%s%s%ln",
                                 IS_SUPPORTED_FUNC(opType) ? "\\" : "", opStr, &written);
-                        ADD_TO_COUNT(written);
-                    }
-                };
-                break;
+                    ADD_TO_COUNT(written);
+                }
+            }
+            break;
             default:
                 fputs("Error: unknown node type", f);
         }
-        bool isPow = OP_OF(node, OP_POW);
         if (isPow) fputc('{', f);
         nodeToTexTraverse(node->right, f, writtenCount, isPow, isPow || suppressNewline);
         if (isPow) fputc('}', f);

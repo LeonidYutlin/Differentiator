@@ -119,6 +119,7 @@ static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
             case OP_ACOS: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_R(NEG_INV_(SQRT_(SUB_(NUM_(1), SQ_(C_R))))));
             case OP_ATAN: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_R(INV_(ADD_(NUM_(1), SQ_(C_R)))));
             case OP_ACOT: DUMP_TO_TEX_AND_RETURN(CHAIN_RULE_R(NEG_INV_(ADD_(NUM_(1), SQ_(C_R)))));
+            default: return NULL;
         }
     }
 
@@ -146,7 +147,7 @@ TreeNode* differentiatePower(TreeNode* node, char var, FILE* tex) {
 
     if (!leftContainsX &&
         rightContainsX) {
-        if (NUM_OF(node->left, M_E))
+        if (OF_NUM(node->left, M_E))
             return CHAIN_RULE_R(C_(node));
         return CHAIN_RULE_R(MUL_(C_(node), LN_(C_L)));
     }

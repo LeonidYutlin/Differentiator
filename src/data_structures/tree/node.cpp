@@ -9,8 +9,8 @@ static size_t NULL_STRING_REPRESENTATION_LENGTH = strlen(NULL_STRING_REPRESENTAT
 
 static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
                                    Error* status, size_t* nodeCount);
-static Error nodeOptimizeConstants(TreeNode** node,size_t* nodeCount);
-static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
+static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status = NULL);
+static Error nodeOptimizeNeutral(TreeNode* node, size_t* nodeCount);
 
 #define RETURN_WITH_STATUS(value, returnValue) \
         { \
@@ -176,8 +176,8 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
 
         TreeNode* node = nodeDynamicInit(data, NULL, left, right, status);
         if (*status) {
-            nodeDestroy(left, true);
-            nodeDestroy(right, true);
+            nodeDelete(left, true);
+            nodeDelete(right, true);
             nodeDestroy(node, true);
             return NULL;
         }
@@ -266,11 +266,17 @@ TreeNode* nodeCopy(TreeNode* src, TreeNode* newParent, Error* status) {
         RETURN_WITH_STATUS(InvalidParameters, NULL);
 
     Error returnedStatus = OK;
-    TreeNode* copy = nodeDynamicInit({src->data.type, src->data.value}, newParent);
+    TreeNode* copy = nodeDynamicInit({src->data.type, src->data.value}, newParent,
+                                     NULL, NULL, &returnedStatus);
+    if (returnedStatus) {
+        nodeDestroy(copy, true);
+        RETURN_WITH_STATUS(returnedStatus, NULL);
+    }
+
     if (src->left)
-        copy->left = nodeCopy(src->left, copy);
+        copy->left = nodeCopy(src->left, copy, &returnedStatus);
     if (src->right)
-        copy->right = nodeCopy(src->right, copy);
+        copy->right = nodeCopy(src->right, copy, &returnedStatus);
 
     if (returnedStatus) {
         nodeDestroy(copy, true);
@@ -306,8 +312,8 @@ Error nodeOptimize(TreeNode** node) {
     size_t prevNodeCount = 0;
     do {
         prevNodeCount = root->nodeCount;
-        nodeOptimizeConstants(node);
-        nodeOptimizeNeutral(node);
+        nodeOptimizeConstants(*node, &root->nodeCount);
+        nodeOptimizeNeutral(node, &root->nodeCount);
     } while (prevNodeCount != root->nodeCount);
 
     TreeNode* temp = detachRoot(root, &returnedStatus);
@@ -317,12 +323,162 @@ Error nodeOptimize(TreeNode** node) {
     return OK;
 }
 
-static Error nodeOptimizeConstants(TreeNode** node, size_t* nodeCount) {
+static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status) {
+    if (!node)
+        RETURN_WITH_STATUS(InvalidParameters, NAN);
+    if (!IS_OP(node))
+        RETURN_WITH_STATUS(OK, NAN);
+    bool suppressOptimization = (OF_OP(node->parent, OP_POW) &&
+                                 OF_OP(node, OP_DIV) &&
+                                 OF_NUM(node->left, 1));
+
+    OpType opType = (OpType)node->data.value;
+    uint argCount = getOpTypeArgumentCount(opType);
+    switch (argCount) {
+        case 1: {
+            double rightVal = IS_NUM(node->right)
+                              ? node->right->data.value
+                              : nodeOptimizeConstants(node->right, nodeCount, status);
+            if (!suppressOptimization &&
+                !node->left &&
+                !isnan(rightVal)) {
+                double result = applyOperation(opType, rightVal);
+                nodeDelete(node->right, true, nodeCount);
+                node->data.type = NUM_TYPE;
+                node->data.value = result;
+                return result;
+            }
+            return NAN;
+        }
+        case 2: {
+            double leftVal =  IS_NUM(node->left)
+                              ? node->left->data.value
+                              : nodeOptimizeConstants(node->left, nodeCount, status);
+            double rightVal = IS_NUM(node->right)
+                              ? node->right->data.value
+                              : nodeOptimizeConstants(node->right, nodeCount, status);
+            if (!suppressOptimization &&
+                !isnan(leftVal) &&
+                !isnan(rightVal)) {
+                double result = applyOperation(opType, leftVal, rightVal);
+                nodeDelete(node->left,  true, nodeCount);
+                nodeDelete(node->right, true, nodeCount);
+                node->data.type = NUM_TYPE;
+                node->data.value = result;
+                return result;
+            }
+            return NAN;
+        }
+        default:
+            return NAN;
+    }
+
+    return NAN;
+}
+
+static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
     if (!node ||
         !*node)
         return InvalidParameters;
+    if (!IS_OP(*node))
+        return OK;
 
-    ////
+    nodeOptimizeNeutral(&(*node)->left, nodeCount);
+    nodeOptimizeNeutral(&(*node)->right, nodeCount);
+
+    OpType opType = (OpType)(*node)->data.value;
+    switch (opType) {
+        case OP_MUL: {
+            if (OF_NUM((*node)->left, 0) ||
+                OF_NUM((*node)->right, 0)) {
+                nodeDelete((*node)->left, true, nodeCount);
+                nodeDelete((*node)->right, true, nodeCount);
+                (*node)->data.type = NUM_TYPE;
+                (*node)->data.value = 0;
+            } else if (OF_NUM((*node)->left, 1)) {
+                (*node)->right->parent = (*node)->parent;
+                TreeNode* temp = (*node)->right;
+                (**node)->right = NULL;
+                nodeDestroy(node, true, nodeCount);
+                *node = temp;
+            } else if (OF_NUM(node->right, 1)) {
+                nodeDelete(node->right, true, nodeCount);
+                if (node->parent) {
+                    node->left->parent = node->parent;
+                    if (node->parent->left == node)
+                        node->parent->left = node->left;
+                    else
+                        node->parent->right = node->left;
+                }
+                node->left = NULL;
+                nodeDestroy(node, true, nodeCount);
+            }
+            return OK;
+        }
+        case OP_DIV: {
+            if (OF_NUM(node->left, 0)) {
+                nodeDelete(node->left, true, nodeCount);
+                nodeDelete(node->right, true, nodeCount);
+                node->data.type = NUM_TYPE;
+                node->data.value = 0;
+            } else if (OF_NUM(node->right, 1)) {
+                nodeDelete(node->right, true, nodeCount);
+                if (node->parent) {
+                    node->left->parent = node->parent;
+                    if (node->parent->left == node)
+                        node->parent->left = node->left;
+                    else
+                        node->parent->right = node->left;
+                }
+                node->left = NULL;
+                nodeDestroy(node, true, nodeCount);
+            }
+            return OK;
+        }
+        case OP_ADD: {
+            if (OF_NUM(node->left, 0)) {
+                nodeDelete(node->left, true, nodeCount);
+                if (node->parent) {
+                    node->right->parent = node->parent;
+                    if (node->parent->left == node)
+                        node->parent->left = node->right;
+                    else
+                        node->parent->right = node->right;
+                }
+                node->right = NULL;
+                nodeDestroy(node, true, nodeCount);
+            } else if (OF_NUM(node->right, 0)) {
+                nodeDelete(node->right, true, nodeCount);
+                if (node->parent) {
+                    node->left->parent = node->parent;
+                    if (node->parent->left == node)
+                        node->parent->left = node->left;
+                    else
+                        node->parent->right = node->left;
+                }
+                node->left = NULL;
+                nodeDestroy(node, true, nodeCount);
+            }
+            return OK;
+        }
+        case OP_SUB: {
+            if (OF_NUM(node->right, 0)) {
+                nodeDelete(node->left, true, nodeCount);
+                if (node->parent) {
+                    node->right->parent = node->parent;
+                    if (node->parent->left == node)
+                        node->parent->left = node->right;
+                    else
+                        node->parent->right = node->right;
+                }
+                node->right = NULL;
+                nodeDestroy(node, true, nodeCount);
+            }
+            return OK;
+        }
+        default:
+            return OK;
+    }
 
     return OK;
 }
@@ -369,7 +525,7 @@ Error countNodesCallback(TreeNode* node, void* data, uint level) {
 // here non-zero return is treated as found variable
 Error findVariableCallback(TreeNode* node, void* data, uint level) {
     char* var = (char*)data;
-    if (VAR_OF(node, *var))
+    if (OF_VAR(node, *var))
         return 1;
     return OK;
 }

@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <sys/types.h>
+#include <math.h>
 #include "../../misc/util.h"
 
 const size_t MAX_VALUE_STRING_LENGTH = 16;
@@ -48,15 +49,15 @@ enum OpType {
     (node && \
      node->data.type == VAR_TYPE)
 
-#define OP_OF(node, opType) \
+#define OF_OP(node, opType) \
     (IS_OP(node) && \
      (OpType)node->data.value == opType)
 
-#define NUM_OF(node, i) \
+#define OF_NUM(node, i) \
     (IS_NUM(node) && \
      doubleEqual(node->data.value, i))
 
-#define VAR_OF(node, i) \
+#define OF_VAR(node, i) \
     (IS_VAR(node) && \
      (char)node->data.value == i)
 
@@ -82,5 +83,9 @@ const char* getOpTypeString(OpType type);
 int getOpType(const char* string);
 uint getOpTypeArgumentCount(OpType type);
 uint getOpTypePriority(OpType type);
+//Applies appropriate operation regarding a and b and returns the result.
+//If the operation doesn't require a second parameter (e.g. cos(x)) then leave b as NAN
+//or use default value for b as NAN
+double applyOperation(OpType type, double a, double b = NAN);
 
 #endif
