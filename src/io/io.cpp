@@ -5,6 +5,7 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+#include "../misc/log.h"
 
 static void nodeToTexTraverse(TreeNode* node, FILE* f,
                               size_t* writtenCount,
@@ -109,6 +110,8 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
 	if (!node || !f)
         return;
 
+    // nodeDump((FILE*)LOG, node, "nodeToTexTraverse node");
+    // fflush((FILE*)LOG);
     bool needsBrackets = (node->parent &&
                           !suppressBrackets &&
                           ((IS_NUM(node) && node->data.value < 0) ||

@@ -39,27 +39,27 @@ enum OpType {
 
 #define IS_OP(node) \
     (node && \
-     node->data.type == OP_TYPE)
+     (node)->data.type == OP_TYPE)
 
 #define IS_NUM(node) \
     (node && \
-     node->data.type == NUM_TYPE)
+     (node)->data.type == NUM_TYPE)
 
 #define IS_VAR(node) \
     (node && \
-     node->data.type == VAR_TYPE)
+     (node)->data.type == VAR_TYPE)
 
 #define OF_OP(node, opType) \
     (IS_OP(node) && \
-     (OpType)node->data.value == opType)
+     (OpType)(node)->data.value == opType)
 
 #define OF_NUM(node, i) \
     (IS_NUM(node) && \
-     doubleEqual(node->data.value, i))
+     doubleEqual((node)->data.value, i))
 
 #define OF_VAR(node, i) \
     (IS_VAR(node) && \
-     (char)node->data.value == i)
+     (char)(node)->data.value == i)
 
 //TODO more easier non-obvious check (for example priority is 3 but not power)
 #define IS_SUPPORTED_FUNC(opType) \

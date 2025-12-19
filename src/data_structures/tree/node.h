@@ -54,6 +54,12 @@ Error nodePrintPrefix (FILE* file, TreeNode* node);
 Error nodePrintInfix  (FILE* file, TreeNode* node);
 Error nodePrintPostfix(FILE* file, TreeNode* node);
 
+//Takes parent, seaches for child as its child, replaces that child with newChild and frees child
+//Note: if your newChild and child are in a relationship then you should make sure they aren't by
+//breaking the bound before calling the function
+Error nodeChangeChild(TreeNode* parent, TreeNode* child, TreeNode* newChild,
+                      size_t* nodeCount);
+
 ///Note: doesnt copy the parent field but instead assigns newParent as copy's parent
 TreeNode*  nodeCopy(TreeNode* srcNode, TreeNode* newParent, Error* status = NULL);
 void nodeFixParents(TreeNode* node);
