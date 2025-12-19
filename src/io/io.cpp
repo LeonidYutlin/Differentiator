@@ -41,8 +41,8 @@ TreeNode* differentiationStepToTex(FILE* f, char var, TreeNode* before, TreeNode
     size_t writtenCount = 0;
     nodeToTexTraverse(before, f, &writtenCount);
     fputs(" = ", f);
-    nodeToTexTraverse(after, f, &writtenCount);
-    fputs(" = ", f);
+    // nodeToTexTraverse(after, f, &writtenCount);
+    // fputs(" = ", f);
     nodeOptimize(&after);
     nodeToTexTraverse(after, f, &writtenCount);
     fputs("\n\\end{align*}\\\\\n", f);
@@ -110,8 +110,6 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
 	if (!node || !f)
         return;
 
-    // nodeDump((FILE*)LOG, node, "nodeToTexTraverse node");
-    // fflush((FILE*)LOG);
     bool needsBrackets = (node->parent &&
                           !suppressBrackets &&
                           ((IS_NUM(node) && node->data.value < 0) ||

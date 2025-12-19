@@ -413,6 +413,23 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
     return NAN;
 }
 
+#define REPLACE_WITH(newNode)                                \
+        {                                                    \
+        TreeNode* newChild = newNode;                        \
+        newNode = NULL;                                      \
+        TreeNode* parent = (*node)->parent;                  \
+        nodeChangeChild(parent, *node, newChild, nodeCount); \
+        *node = newChild;                                    \
+        }                                                    \
+
+#define REDUCE_TO(nodeType, nodeValue)               \
+        {                                            \
+        nodeDelete((*node)->left , true, nodeCount); \
+        nodeDelete((*node)->right, true, nodeCount); \
+        (*node)->data.type  = nodeType;              \
+        (*node)->data.value = nodeValue;             \
+        }
+
 static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
     if (!node ||
         !*node)
@@ -428,103 +445,43 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
         case OP_MUL: {
             if (OF_NUM((*node)->left, 0) ||
                 OF_NUM((*node)->right, 0)) {
-                nodeDelete((*node)->left, true, nodeCount);
-                nodeDelete((*node)->right, true, nodeCount);
-                (*node)->data.type = NUM_TYPE;
-                (*node)->data.value = 0;
+                REDUCE_TO(NUM_TYPE, 0);
             } else if (OF_NUM((*node)->left, 1)) {
-                TreeNode* newChild = (*node)->right;
-                (*node)->right = NULL;
-                TreeNode* parent = (*node)->parent;
-                nodeChangeChild(parent, *node, newChild, nodeCount);
-                // fprintf(stderr, "OUTSIDE: NewChild is %p\n"
-                //                 "\tparent = %p\n"
-                //                 "\tleft = %p\n"
-                //                 "\tright = %p\n",
-                //                 newChild, newChild->parent, newChild->left, newChild->right);
-                *node = newChild;
+                REPLACE_WITH((*node)->right);
             } else if (OF_NUM((*node)->right, 1)) {
-                TreeNode* newChild = (*node)->left;
-                (*node)->left = NULL;
-                TreeNode* parent = (*node)->parent;
-                nodeChangeChild(parent, *node, newChild, nodeCount);
-                // fprintf(stderr, "OUTSIDE: NewChild is %p\n"
-                //                 "\tparent = %p\n"
-                //                 "\tleft = %p\n"
-                //                 "\tright = %p\n",
-                //                 newChild, newChild->parent, newChild->left, newChild->right);
-                *node = newChild;
+                REPLACE_WITH((*node)->left);
             }
             break;
         }
         case OP_DIV: {
             if (OF_NUM((*node)->left, 0)) {
-                nodeDelete((*node)->left, true, nodeCount);
-                nodeDelete((*node)->right, true, nodeCount);
-                (*node)->data.type = NUM_TYPE;
-                (*node)->data.value = 0;
+                REDUCE_TO(NUM_TYPE, 0);
             } else if (OF_NUM((*node)->right, 1)) {
-                TreeNode* newChild = (*node)->left;
-                (*node)->left = NULL;
-                TreeNode* parent = (*node)->parent;
-                nodeChangeChild(parent, *node, newChild, nodeCount);
-                // fprintf(stderr, "OUTSIDE: NewChild is %p\n"
-                //                 "\tparent = %p\n"
-                //                 "\tleft = %p\n"
-                //                 "\tright = %p\n",
-                //                 newChild, newChild->parent, newChild->left, newChild->right);
-                *node = newChild;
+                REPLACE_WITH((*node)->left);
             }
             break;
         }
         case OP_ADD: {
             if (OF_NUM((*node)->left, 0)) {
-                TreeNode* newChild = (*node)->right;
-                (*node)->right = NULL;
-                TreeNode* parent = (*node)->parent;
-                nodeChangeChild(parent, *node, newChild, nodeCount);
-                // fprintf(stderr, "OUTSIDE: NewChild is %p\n"
-                //                 "\tparent = %p\n"
-                //                 "\tleft = %p\n"
-                //                 "\tright = %p\n",
-                //                 newChild, newChild->parent, newChild->left, newChild->right);
-                *node = newChild;
+                REPLACE_WITH((*node)->right);
             } else if (OF_NUM((*node)->right, 0)) {
-                TreeNode* newChild = (*node)->left;
-                (*node)->left = NULL;
-                TreeNode* parent = (*node)->parent;
-                nodeChangeChild(parent, *node, newChild, nodeCount);
-                // fprintf(stderr, "OUTSIDE: NewChild is %p\n"
-                //                 "\tparent = %p\n"
-                //                 "\tleft = %p\n"
-                //                 "\tright = %p\n",
-                //                 newChild, newChild->parent, newChild->left, newChild->right);
-                *node = newChild;
+                REPLACE_WITH((*node)->left);
             }
             break;
         }
         case OP_SUB: {
-            if (OF_NUM((*node)->right, 0)) {
-                TreeNode* newChild = (*node)->left;
-                (*node)->left = NULL;
-                TreeNode* parent = (*node)->parent;
-                nodeChangeChild(parent, *node, newChild, nodeCount);
-                *node = newChild;
-            }
+            if (OF_NUM((*node)->right, 0))
+                REPLACE_WITH((*node)->left);
             break;
         }
         case OP_POW: {
-            if (OF_NUM((*node)->right, 0)) {
-                nodeDelete((*node)->left, true, nodeCount);
-                nodeDelete((*node)->right, true, nodeCount);
-                (*node)->data.type = NUM_TYPE;
-                (*node)->data.value = 1;
+            if (OF_NUM((*node)->right, 0) ||
+                OF_NUM((*node)->left, 1)) {
+                REDUCE_TO(NUM_TYPE, 1);
+            } else if (OF_NUM((*node)->left, 0)) {
+                REDUCE_TO(NUM_TYPE, 0);
             } else if (OF_NUM((*node)->right, 1)) {
-                TreeNode* newChild = (*node)->left;
-                (*node)->left = NULL;
-                TreeNode* parent = (*node)->parent;
-                nodeChangeChild(parent, *node, newChild, nodeCount);
-                *node = newChild;
+                REPLACE_WITH((*node)->left);
             }
             break;
         }
@@ -534,6 +491,9 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
 
     return OK;
 }
+
+#undef REPLACE_WITH
+#undef REDUCE_TO
 
 Error nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {
     if (!node)
