@@ -13,10 +13,10 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
 static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
 
 #define RETURN_WITH_STATUS(value, returnValue) \
-        { \
-        if (status) \
-            *status = value; \
-        return returnValue; \
+        {                                      \
+        if (status)                            \
+            *status = value;                   \
+        return returnValue;                    \
         }
 
 Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent,
@@ -70,22 +70,22 @@ TreeNode* nodeRead(FILE* f, Error* status, size_t* nodeCount) {
     return node;
 }
 
-#define DUMP_ERROR_RETURN(commentary) \
-        { \
-        fprintf(stderr, \
+#define DUMP_ERROR_RETURN(commentary)                            \
+        {                                                        \
+        fprintf(stderr,                                          \
                 "[ERROR]: Failed to read node at position %lu\n" \
-                "Comment: %s\n" \
-                "\tLine snippet:\n" \
-                "\t->%.10s...\n", \
-                *pos, \
-                commentary, \
-                buf + *pos); \
-        RETURN_WITH_STATUS(FailReadNode, NULL); \
+                "Comment: %s\n"                                  \
+                "\tLine snippet:\n"                              \
+                "\t->%.10s...\n",                                \
+                *pos,                                            \
+                commentary,                                      \
+                buf + *pos);                                     \
+        RETURN_WITH_STATUS(FailReadNode, NULL);                  \
         }
 
-#define SKIP_WHITESPACE \
+#define SKIP_WHITESPACE              \
         while (isspace(buf[*pos])) { \
-            (*pos)++; \
+            (*pos)++;                \
         }
 
 static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
@@ -301,19 +301,6 @@ void nodeFixParents(TreeNode* node) {
 }
 
 Error nodeChangeChild(TreeNode* parent, TreeNode* child, TreeNode* newChild, size_t* nodeCount) {
-    // fprintf(stderr, "Called with\n"
-    //                 "parent = %p\n"
-    //                 "child = %p\n"
-    //                 "newChild = %p\n",
-    //                 parent, child, newChild);
-    // fprintf(stderr, "Parent of newchild is %p\n"
-    //                     "left is %p\n"
-    //                     "right is %p\n",
-    //                     newChild->parent, newChild->left, newChild->right);
-    // fprintf(stderr, "Parent of child is %p\n"
-    //                     "left is %p\n"
-    //                     "right is %p\n",
-    //                     child->parent, child->left, child->right);
     if (!parent) {
         if (newChild)
             newChild->parent = parent;
@@ -329,10 +316,6 @@ Error nodeChangeChild(TreeNode* parent, TreeNode* child, TreeNode* newChild, siz
         nodeDestroy(child, true, nodeCount);
     }
 
-    // fprintf(stderr, "Parent of newchild is %p\n"
-    //                     "left is %p\n"
-    //                     "right is %p\n",
-    //                     newChild->parent, newChild->left, newChild->right);
     return OK;
 }
 

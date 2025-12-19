@@ -2,10 +2,10 @@
 #include <stdlib.h>
 
 #define RETURN_WITH_STATUS(value, returnValue) \
-        { \
-        if (status) \
-            *status = value; \
-        return returnValue; \
+        {                                      \
+        if (status)                            \
+            *status = value;                   \
+        return returnValue;                    \
         }
 
 TreeRoot* attachRoot(TreeNode* node, Error* status) {

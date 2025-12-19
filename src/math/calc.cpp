@@ -8,21 +8,21 @@ static double getT(const char* buf, size_t* p);
 static double getP(const char* buf, size_t* p);
 static double getN(const char* buf, size_t* p);
 
-#define SYNTAX_ERROR(commentary, expectedCharStr, pos) \
-        { \
-        fprintf(stderr, \
+#define SYNTAX_ERROR(commentary, expectedCharStr, pos)                    \
+        {                                                                 \
+        fprintf(stderr,                                                   \
                 "[ERROR]: Failed to read given mathematical expression\n" \
-                "At position %lu\n" \
-                "%s\n" \
-                "Expected char: %s\n" \
-                "String snippet:\n" \
-                "%.10s...\n" \
-                "^\n", \
-                pos, \
-                commentary, \
-                expectedCharStr, \
-                buf + pos); \
-        return NAN; \
+                "\tAt position %lu\n"                                     \
+                "\t%s\n"                                                  \
+                "\tExpected char: %s\n"                                   \
+                "\tString snippet:\n"                                     \
+                "\t%.10s...\n"                                            \
+                "\t^\n",                                                  \
+                pos,                                                      \
+                commentary,                                               \
+                expectedCharStr,                                          \
+                buf + pos);                                               \
+        return NAN;                                                       \
         }
 
 double evaluate(const char* buf) {

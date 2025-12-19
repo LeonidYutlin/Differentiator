@@ -59,17 +59,17 @@ void treeDump(FILE* f, TreeRoot* root, const char* commentary, const char* filen
     treeGraphDump(f, root, callCount);
 }
 
-#define DOT_HEADER_INIT(file) \
-        fprintf(file, \
-                 "digraph G {\n" \
-                 "rankdir=TB;\n" \
-                 "graph [bgcolor=\"%s\", pad=0.25, nodesep=0.55, " \
-                        "ranksep=0.9, splines=ortho, ordering=\"in\"];\n" \
-                 "node [shape=hexagon, style=\"filled\", color=\"%s\", penwidth=1.4, " \
-                       "fillcolor=\"%s\", fontname=\"monospace\", fontsize=30];\n" \
+#define DOT_HEADER_INIT(file)                                                                      \
+        fprintf(file,                                                                              \
+                 "digraph G {\n"                                                                   \
+                 "rankdir=TB;\n"                                                                   \
+                 "graph [bgcolor=\"%s\", pad=0.25, nodesep=0.55, "                                 \
+                        "ranksep=0.9, splines=ortho, ordering=\"in\"];\n"                          \
+                 "node [shape=hexagon, style=\"filled\", color=\"%s\", penwidth=1.4, "             \
+                       "fillcolor=\"%s\", fontname=\"monospace\", fontsize=30];\n"                 \
                  "edge [color=\"%s\", penwidth=2.5, weight = 0, arrowsize=0.8, arrowhead=vee];\n", \
-                 BG_COLOR, \
-                 BAD_OUTLINE, BAD_FILL, \
+                 BG_COLOR,                                                                         \
+                 BAD_OUTLINE, BAD_FILL,                                                            \
                  BG_COLOR);
 
 void nodeDump(FILE* f, TreeNode* node, const char* commentary, const char* filename, int line) {
@@ -248,17 +248,18 @@ static void populateDot(FILE* dot, TreeNode* node) {
     declareRank(dot, node, &queue);
 }
 
-#define DECLARE_CHILD_NODE(child) \
-        { \
-        if (child) { \
-            if (child->parent == node) { \
-                fprintf(dot, "node%p -> node%p [color=\"%s\", arrowtail=vee, dir=both]\n", node, child, OK_EDGE); \
-                declareNode(dot, child); \
-            } else { \
-                fprintf(dot, "node%p -> node%p [color=\"%s\"]\n", node, child, BAD_EDGE); \
-                declareNode(dot, child, true); \
-            } \
-        } \
+#define DECLARE_CHILD_NODE(child)                                                          \
+        {                                                                                  \
+        if (child) {                                                                       \
+            if (child->parent == node) {                                                   \
+                fprintf(dot, "node%p -> node%p [color=\"%s\", arrowtail=vee, dir=both]\n", \
+                        node, child, OK_EDGE);                                             \
+                declareNode(dot, child);                                                   \
+            } else {                                                                       \
+                fprintf(dot, "node%p -> node%p [color=\"%s\"]\n", node, child, BAD_EDGE);  \
+                declareNode(dot, child, true);                                             \
+            }                                                                              \
+        }                                                                                  \
         }
 
 static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {

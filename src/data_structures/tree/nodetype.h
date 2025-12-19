@@ -37,45 +37,45 @@ enum OpType {
     OP_COTH,
 };
 
-#define IS_OP(node) \
-    (node && \
+#define IS_OP(node)                \
+    (node &&                       \
      (node)->data.type == OP_TYPE)
 
-#define IS_NUM(node) \
-    (node && \
+#define IS_NUM(node)                \
+    (node &&                        \
      (node)->data.type == NUM_TYPE)
 
-#define IS_VAR(node) \
-    (node && \
+#define IS_VAR(node)                \
+    (node &&                        \
      (node)->data.type == VAR_TYPE)
 
-#define OF_OP(node, opType) \
-    (IS_OP(node) && \
+#define OF_OP(node, opType)                \
+    (IS_OP(node) &&                        \
      (OpType)(node)->data.value == opType)
 
-#define OF_NUM(node, i) \
-    (IS_NUM(node) && \
+#define OF_NUM(node, i)                  \
+    (IS_NUM(node) &&                     \
      doubleEqual((node)->data.value, i))
 
-#define OF_VAR(node, i) \
-    (IS_VAR(node) && \
+#define OF_VAR(node, i)             \
+    (IS_VAR(node) &&                \
      (char)(node)->data.value == i)
 
 //TODO more easier non-obvious check (for example priority is 3 but not power)
 #define IS_SUPPORTED_FUNC(opType) \
-        (opType == OP_COS  || \
-         opType == OP_SIN  || \
-         opType == OP_TAN  || \
-         opType == OP_COT  || \
-         opType == OP_LOG  || \
-         opType == OP_LN   || \
-         opType == OP_ASIN || \
-         opType == OP_ACOS || \
-         opType == OP_ATAN || \
-         opType == OP_ACOT || \
-         opType == OP_SINH || \
-         opType == OP_COSH || \
-         opType == OP_TANH || \
+        (opType == OP_COS  ||     \
+         opType == OP_SIN  ||     \
+         opType == OP_TAN  ||     \
+         opType == OP_COT  ||     \
+         opType == OP_LOG  ||     \
+         opType == OP_LN   ||     \
+         opType == OP_ASIN ||     \
+         opType == OP_ACOS ||     \
+         opType == OP_ATAN ||     \
+         opType == OP_ACOT ||     \
+         opType == OP_SINH ||     \
+         opType == OP_COSH ||     \
+         opType == OP_TANH ||     \
          opType == OP_COTH)
 
 const char* getNodeTypeString(NodeType type);

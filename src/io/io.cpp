@@ -98,9 +98,9 @@ void closeTexLogFile(FILE* file) {
     fclose(file);
 }
 
-#define ADD_TO_COUNT(x) \
-        { \
-        if (writtenCount) \
+#define ADD_TO_COUNT(x)                 \
+        {                               \
+        if (writtenCount)               \
             *writtenCount += (size_t)x; \
         }
 
