@@ -267,12 +267,6 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
     if (!node)
         return;
 
-    char valStr[MAX_VALUE_STRING_LENGTH] = {0};
-    if (node->data.type == OP_TYPE) {
-        snprintf(valStr, MAX_VALUE_STRING_LENGTH, "(%s)", getOpTypeString((OpType)node->data.value));
-    } else if (node->data.type == VAR_TYPE) {
-        snprintf(valStr, MAX_VALUE_STRING_LENGTH, "(%c)", (char)node->data.value);
-    }
     fprintf(dot,
                 "node%p"
                 "[shape=box, style=\"rounded, filled\", color=\"%s\", fillcolor=\"%s\", penwidth=2.1, fontsize=14, label="
@@ -282,10 +276,42 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
                 "</tr>"
                 "<tr>"
                     "<td colspan=\"6\" bgcolor=\"%s\"><b>type:</b> %s</td>"
-                "</tr>"
+                "</tr>",
+                node,
+                TABLE_OUTLINE,
+                node->data.type == OP_TYPE  ? OP_CELL  :
+                node->data.type == NUM_TYPE ? NUM_CELL :
+                node->data.type == VAR_TYPE ? VAR_CELL :
+                DEFAULT_CELL,
+                TABLE_OUTLINE,
+                PARENT_FILL,  node->parent,
+                TYPE_FILL,    getNodeTypeString(node->data.type));
+    switch(node->data.type) {
+        case OP_TYPE:
+            fprintf(dot,
                 "<tr>"
-                    "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %lf %s</td>"
-                "</tr>"
+                    "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %s</td>"
+                "</tr>",
+                VALUE_FILL, getOpTypeString(node->data.value.op));
+            break;
+        case VAR_TYPE:
+            fprintf(dot,
+                "<tr>"
+                    "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %c</td>"
+                "</tr>",
+                VALUE_FILL, node->data.value.var);
+            break;
+        case NUM_TYPE:
+            fprintf(dot,
+                "<tr>"
+                    "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %lf</td>"
+                "</tr>",
+                VALUE_FILL, node->data.value.num);
+            break;
+        default:
+            break;
+    }
+    fprintf(dot,
                 "<tr>"
                     "<td colspan=\"6\" bgcolor=\"%s\"><b>address:</b> %p</td>"
                 "</tr>"
@@ -295,17 +321,6 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
                 "</tr>"
                 "</table>"
                 ">];\n",
-                node,
-                TABLE_OUTLINE,
-                node->data.type == OP_TYPE  ? OP_CELL  :
-                node->data.type == NUM_TYPE ? NUM_CELL :
-                node->data.type == VAR_TYPE ? VAR_CELL :
-                DEFAULT_CELL,
-                TABLE_OUTLINE,
-                PARENT_FILL,  node->parent,
-                TYPE_FILL,    getNodeTypeString(node->data.type),
-                VALUE_FILL,   node->data.value,
-                valStr,
                 ADDRESS_FILL, node,
                 node->data.type != OP_TYPE && node->left
                 ? DEFAULT_CELL

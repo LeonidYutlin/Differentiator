@@ -9,9 +9,15 @@
 #include "nodetype.h"
 #include "../../misc/error.h"
 
+union NodeValue {
+    OpType op;
+    char var;
+    double num;
+};
+
 struct NodeUnit {
     NodeType type = UNKNOWN_TYPE;
-    double value = NAN;
+    NodeValue value;
 };
 
 struct TreeNode {

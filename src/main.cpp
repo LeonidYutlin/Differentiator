@@ -6,9 +6,7 @@
 
 //TODO adapt eval for trees
 //TODO multibyte var names (requires a different memorization system)
-//TODO unions
 //TODO calculation with given var values
-//TODO differentiation
 //TODO Taylor Series
 //TODO partial derivative
 //TODO total derivative

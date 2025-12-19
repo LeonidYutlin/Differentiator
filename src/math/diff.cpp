@@ -4,7 +4,7 @@
 #include <math.h>
 
 #define NUM_(i) \
-        nodeDynamicInit((NodeUnit){NUM_TYPE, (double)i})
+        nodeDynamicInit((NodeUnit){.type = NUM_TYPE, .value = {.num = i}})
 #define D_CONST \
         NUM_(0)
 #define D_X \
@@ -73,33 +73,26 @@ TreeNode* differentiate(TreeNode* node, char var, FILE* tex) {
     return diff;
 }
 
-#define DUMP_TO_TEX_AND_RETURN(returnNode) \
-        { \
-        if (tex) { \
-            return differentiationStepToTex(tex, var, node, returnNode); \
-        } else { \
-            return returnNode; \
-        }\
-        }\
+#define DUMP_TO_TEX_AND_RETURN(returnNode)                            \
+        return tex                                                    \
+               ? differentiationStepToTex(tex, var, node, returnNode) \
+               : returnNode;
 
 static TreeNode* differentiateRec(TreeNode* node, char var, FILE* tex) {
     if (!node)
         return NULL;
 
     if (node->data.type == NUM_TYPE ||
-        (node->data.type == VAR_TYPE && (char)node->data.value != var)) {
-        // fprintf(stderr, "Called const der, node->data.value char is %c and var is %c\n", (char)node->data.value, var);
+        (node->data.type == VAR_TYPE && node->data.value.var != var)) {
         DUMP_TO_TEX_AND_RETURN(D_CONST);
     }
 
-    if (node->data.type == VAR_TYPE && (char)node->data.value == var) {
-        //fprintf(stderr, "Called x der\n");
+    if (node->data.type == VAR_TYPE && node->data.value.var == var) {
         DUMP_TO_TEX_AND_RETURN(D_X);
     }
 
     if (node->data.type == OP_TYPE) {
-        OpType opType = (OpType)node->data.value;
-        switch (opType) {
+        switch (node->data.value.op) {
             case OP_ADD:  DUMP_TO_TEX_AND_RETURN(ADD_(D_L, D_R));
             case OP_SUB:  DUMP_TO_TEX_AND_RETURN(SUB_(D_L, D_R));
             case OP_MUL:  DUMP_TO_TEX_AND_RETURN(ADD_(MUL_(D_L, C_R), MUL_(C_L, D_R)));

@@ -109,7 +109,7 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
             (buf[*pos] == '-' && isdigit(buf[*pos + 1]))) {
             if (sscanf(buf + *pos,
                        "%lg%n",
-                       &data.value, &charReadN) != 1)
+                       &data.value.num, &charReadN) != 1)
                 DUMP_ERROR_RETURN("No valid value in node");
             data.type = NUM_TYPE;
             *pos += (size_t)charReadN;
@@ -122,22 +122,22 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
             int opType = getOpType(valStr);
             //fprintf(stderr, "returned opType %d\n", opType);
             if (opType >= 0) {
-                data.value = opType;
+                data.value.op = (OpType)opType;
                 data.type = OP_TYPE;
                 *pos += (size_t)charReadN;
             } else if (charReadN == 1){
-                data.value = buf[*pos];
+                data.value.var = buf[*pos];
                 data.type = VAR_TYPE;
                 *pos += (size_t)charReadN;
             } else {
                 DUMP_ERROR_RETURN("Bad variable name in node (longer than 1 char?)");
             }
         }
-        if (isnan(data.value))
+        if (data.type == UNKNOWN_TYPE)
             DUMP_ERROR_RETURN("No value in node");
 
         uint expectedChildN = data.type == OP_TYPE
-                              ? getOpTypeArgumentCount((OpType)data.value)
+                              ? getOpTypeArgumentCount(data.value.op)
                               : 0;
 
         TreeNode* left  = nodeReadRecursion(buf, bufSize, pos, status, nodeCount);
@@ -230,7 +230,12 @@ Error nodePrintPrefix(FILE* f, TreeNode* node) {
         return InvalidParameters;
 
     fputc('(', f);
-    fprintf(f, "%lf", node->data.value);
+    switch (node->data.type) {
+        case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
+        case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
+        case OP_TYPE : fprintf(f, "%s",  getOpTypeString(node->data.value.op)); break;
+        default: break;
+    }
     nodePrintPrefix(f, node->left);
     nodePrintPrefix(f, node->right);
     fputc(')', f);
@@ -243,7 +248,12 @@ Error nodePrintInfix(FILE* f, TreeNode* node) {
 
     fputc('(', f);
     nodePrintPrefix(f, node->left);
-    fprintf(f, "%lf", node->data.value);
+    switch (node->data.type) {
+        case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
+        case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
+        case OP_TYPE : fprintf(f, "%s",  getOpTypeString(node->data.value.op)); break;
+        default: break;
+    }
     nodePrintPrefix(f, node->right);
     fputc(')', f);
     return OK;
@@ -256,7 +266,12 @@ Error nodePrintPostfix(FILE* f, TreeNode* node) { ///// ?
     fputc('(', f);
     nodePrintPrefix(f, node->left);
     nodePrintPrefix(f, node->right);
-    fprintf(f, "%lf", node->data.value);
+    switch (node->data.type) {
+        case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
+        case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
+        case OP_TYPE : fprintf(f, "%s",  getOpTypeString(node->data.value.op)); break;
+        default: break;
+    }
     fputc(')', f);
     return OK;
 }
@@ -351,12 +366,12 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
                                  OF_OP(node, OP_DIV) &&
                                  OF_NUM(node->left, 1));
 
-    OpType opType = (OpType)node->data.value;
+    OpType opType = node->data.value.op;
     uint argCount = getOpTypeArgumentCount(opType);
     switch (argCount) {
         case 1: {
             double rightVal = IS_NUM(node->right)
-                              ? node->right->data.value
+                              ? node->right->data.value.num
                               : nodeOptimizeConstants(node->right, nodeCount, status);
             if (!suppressOptimization &&
                 !node->left &&
@@ -364,17 +379,17 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
                 double result = applyOperation(opType, rightVal);
                 nodeDelete(node->right, true, nodeCount);
                 node->data.type = NUM_TYPE;
-                node->data.value = result;
+                node->data.value.num = result;
                 return result;
             }
             return NAN;
         }
         case 2: {
             double leftVal =  IS_NUM(node->left)
-                              ? node->left->data.value
+                              ? node->left->data.value.num
                               : nodeOptimizeConstants(node->left, nodeCount, status);
             double rightVal = IS_NUM(node->right)
-                              ? node->right->data.value
+                              ? node->right->data.value.num
                               : nodeOptimizeConstants(node->right, nodeCount, status);
             if (!suppressOptimization &&
                 !isnan(leftVal) &&
@@ -383,7 +398,7 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
                 nodeDelete(node->left,  true, nodeCount);
                 nodeDelete(node->right, true, nodeCount);
                 node->data.type = NUM_TYPE;
-                node->data.value = result;
+                node->data.value.num = result;
                 return result;
             }
             return NAN;
@@ -404,12 +419,12 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
         *node = newChild;                                    \
         }                                                    \
 
-#define REDUCE_TO(nodeType, nodeValue)               \
+#define REDUCE_TO_NUM(nodeValue)                     \
         {                                            \
         nodeDelete((*node)->left , true, nodeCount); \
         nodeDelete((*node)->right, true, nodeCount); \
-        (*node)->data.type  = nodeType;              \
-        (*node)->data.value = nodeValue;             \
+        (*node)->data.type      = NUM_TYPE;          \
+        (*node)->data.value.num = nodeValue;         \
         }
 
 static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
@@ -422,12 +437,11 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
     nodeOptimizeNeutral(&(*node)->left, nodeCount);
     nodeOptimizeNeutral(&(*node)->right, nodeCount);
 
-    OpType opType = (OpType)(*node)->data.value;
-    switch (opType) {
+    switch ((*node)->data.value.op) {
         case OP_MUL: {
             if (OF_NUM((*node)->left, 0) ||
                 OF_NUM((*node)->right, 0)) {
-                REDUCE_TO(NUM_TYPE, 0);
+                REDUCE_TO_NUM(0);
             } else if (OF_NUM((*node)->left, 1)) {
                 REPLACE_WITH((*node)->right);
             } else if (OF_NUM((*node)->right, 1)) {
@@ -437,7 +451,7 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
         }
         case OP_DIV: {
             if (OF_NUM((*node)->left, 0)) {
-                REDUCE_TO(NUM_TYPE, 0);
+                REDUCE_TO_NUM(0);
             } else if (OF_NUM((*node)->right, 1)) {
                 REPLACE_WITH((*node)->left);
             }
@@ -459,9 +473,9 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
         case OP_POW: {
             if (OF_NUM((*node)->right, 0) ||
                 OF_NUM((*node)->left, 1)) {
-                REDUCE_TO(NUM_TYPE, 1);
+                REDUCE_TO_NUM(1);
             } else if (OF_NUM((*node)->left, 0)) {
-                REDUCE_TO(NUM_TYPE, 0);
+                REDUCE_TO_NUM(0);
             } else if (OF_NUM((*node)->right, 1)) {
                 REPLACE_WITH((*node)->left);
             }
@@ -475,7 +489,7 @@ static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount) {
 }
 
 #undef REPLACE_WITH
-#undef REDUCE_TO
+#undef REDUCE_TO_NUM
 
 Error nodeDelete(TreeNode* node, bool isAlloced, size_t* nodeCount) {
     if (!node)
@@ -500,7 +514,7 @@ Error nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
     node->left   = NULL;
     node->right  = NULL;
     node->parent = NULL;
-    node->data.value   = {};
+    node->data   = {};
 
     if (isAlloced)
         free(node);

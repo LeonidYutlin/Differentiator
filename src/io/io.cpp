@@ -111,9 +111,10 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
 
     bool needsBrackets = (node->parent &&
                           !suppressBrackets &&
-                          ((IS_NUM(node) && node->data.value < 0) ||
-                            IS_SUPPORTED_FUNC((OpType)node->parent->data.value) ||
-                           (IS_OP(node) && compareParentPriority(node))));
+                          ((IS_NUM(node) && node->data.value.num < 0) ||
+                           (IS_OP(node) &&
+                            (IS_SUPPORTED_FUNC(node->parent->data.value.op) ||
+                             compareParentPriority(node)))));
     bool isDivision = OF_OP(node, OP_DIV);
     bool isLog      = (!isDivision &&
                        OF_OP(node, OP_LOG));
@@ -142,7 +143,7 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
         fputs("}", f);
         nodeToTexTraverse(node->right, f, writtenCount, false, suppressNewline);
     } else if (isRoot) {
-        if (doubleEqual(node->right->right->data.value, 2)) {
+        if (doubleEqual(node->right->right->data.value.num, 2)) {
             fputs("\\sqrt{", f);
         } else {
             fputs("\\sqrt[", f);
@@ -159,17 +160,17 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
         switch (node->data.type) {
             case NUM_TYPE: {
                 long written = 0;
-                fprintf(f, "%lg%ln", node->data.value, &written);
+                fprintf(f, "%lg%ln", node->data.value.num, &written);
                 ADD_TO_COUNT(written);
             }
             break;
             case VAR_TYPE: {
-                fprintf(f, "%c", (int)node->data.value);
+                fprintf(f, "%c", node->data.value.var);
                 ADD_TO_COUNT(1);
             }
             break;
             case OP_TYPE: {
-                OpType opType = (OpType)node->data.value;
+                OpType opType = node->data.value.op;
                 if (!(opType == OP_MUL &&
                     node->right &&
                     node->right->data.type == VAR_TYPE)) {
@@ -207,9 +208,7 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
 
 static bool compareParentPriority(TreeNode* node) {
     assert(node);
-    OpType parentType = (OpType)node->parent->data.value;
-    OpType ownType    = (OpType)node->data.value;
-
-    return getOpTypePriority(parentType) > getOpTypePriority(ownType);
+    return getOpTypePriority(node->parent->data.value.op)
+           > getOpTypePriority(node->data.value.op);
 }
 
