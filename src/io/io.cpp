@@ -5,7 +5,6 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
-#include "../misc/log.h"
 
 static void nodeToTexTraverse(TreeNode* node, FILE* f,
                               size_t* writtenCount,

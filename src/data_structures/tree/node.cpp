@@ -1,6 +1,5 @@
 #include "tree.h"
 #include "../../misc/util.h"
-#include "../../misc/log.h"
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>

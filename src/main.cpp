@@ -3,7 +3,6 @@
 #include "math/diff.h"
 #include "math/calc.h"
 #include "io/io.h"
-#include "misc/log.h"
 
 //TODO adapt eval for trees
 //TODO multibyte var names (requires a different memorization system)
@@ -54,7 +53,5 @@ int main() {
     nodeDestroy(diffTreeX, true);
     // nodeDestroy(diffTreeY, true);
     // nodeDestroy(diffTreeZ, true);
-
-    fclose(LOG);
 }
 
