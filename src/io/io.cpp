@@ -112,9 +112,8 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
     bool needsBrackets = (node->parent &&
                           !suppressBrackets &&
                           ((IS_NUM(node) && node->data.value.num < 0) ||
-                           (IS_OP(node) &&
-                            (IS_SUPPORTED_FUNC(node->parent->data.value.op) ||
-                             compareParentPriority(node)))));
+                            IS_SUPPORTED_FUNC(node->parent->data.value.op) ||
+                            (IS_OP(node) && compareParentPriority(node))));
     bool isDivision = OF_OP(node, OP_DIV);
     bool isLog      = (!isDivision &&
                        OF_OP(node, OP_LOG));

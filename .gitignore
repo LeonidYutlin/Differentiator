@@ -1,4 +1,5 @@
 .log/*
+.test/*
 *.exe
 *.html
 *.png

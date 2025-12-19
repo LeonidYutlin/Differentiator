@@ -27,7 +27,7 @@ int main() {
     }
 
 
-    FILE* log = initHtmlLogFile();
+    //FILE* log = initHtmlLogFile();
     FILE* tex = initTexLogFile();
 
     FILE* expr = fopen(".test/expr_test.txt", "r");
@@ -37,15 +37,15 @@ int main() {
         return 1;
     }
     fclose(expr);
-    treeDump(log, tree, "<b3>Read tree</b3>");
+    //treeDump(log, tree, "<b3>Read tree</b3>");
     treeToTex(tex, tree);
     TreeNode* diffTreeX = differentiate(tree->rootNode, 'x', tex);
     // TreeNode* diffTreeY = differentiate(tree->rootNode, 'y', tex);
     // TreeNode* diffTreeZ = differentiate(tree->rootNode, 'z', tex);
-    nodeDump(log, diffTreeX, "<b3> tree after diff </b3>");
+    //nodeDump(log, diffTreeX, "<b3> tree after diff </b3>");
     nodeToTex(tex, diffTreeX);
     closeTexLogFile(tex);
-    fclose(log);
+    // fclose(log);
 
     treeDestroy(tree, true);
     nodeDestroy(diffTreeX, true);
