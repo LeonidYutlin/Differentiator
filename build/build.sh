@@ -17,5 +17,6 @@ do
 done
 
 rm -f $OUTPUT_PATH
+printf "\n\n\n\n"
 g++ $DEFINES $CFLAGS $SRC_FILES $LIBS -o $OUTPUT_PATH
 cd $SAVED_DIR
