@@ -1,45 +1,47 @@
 #include "util.h"
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
-static const size_t MAX_TIMESTAMPED_FILE_PATH_LENGTH = 128;
+static const size_t TIMESTAMP_LEN = 128;
 static const double DOUBLE_COMPARISON_PRECISION = 1e-9;
 
 bool doubleEqual(double a, double b) {
     return fabs(a - b) < DOUBLE_COMPARISON_PRECISION;
 }
 
+#define DEFER() { \
+  free(str);      \
+  return NULL;    \
+}
+#define REMAINING_LEN TIMESTAMP_LEN - (size_t)(target - str)
 char* getTimestampedString(const char* prefix, const char* suffix, uint count) {
     time_t timeAbs = time(NULL);
-    tm* localTime = localtime(&timeAbs);
-    char* name    = (char*)calloc(MAX_TIMESTAMPED_FILE_PATH_LENGTH, sizeof(char));
-    char* pattern = (char*)calloc(MAX_TIMESTAMPED_FILE_PATH_LENGTH, sizeof(char));
-    if (!pattern || !name) {
-        free(name); free(pattern);
-        return NULL;
-    }
+    tm* localTime  = localtime(&timeAbs);
+    char* str = (char*)calloc(TIMESTAMP_LEN, sizeof(char));
+    if (!str)
+      DEFER();
 
+    char* target = str;
+    strncat(target, prefix, REMAINING_LEN - 1);
+    target += strlen(prefix);
+    size_t n = strftime(target, REMAINING_LEN, "%d-%m-%Y-%H:%M:%S", localTime);
+    if (!n) 
+      DEFER();
+    target += n;
     if (count) {
-        snprintf(pattern, MAX_TIMESTAMPED_FILE_PATH_LENGTH,
-                 "%s%%d-%%m-%%Y-%%H:%%M:%%S-%u%s",
-                 prefix,
-                 count,
-                 suffix);
+      if (snprintf(target, REMAINING_LEN, "-%u%s", count, suffix) <= 0)
+        DEFER();
     } else {
-        snprintf(pattern, MAX_TIMESTAMPED_FILE_PATH_LENGTH,
-                 "%s%%d-%%m-%%Y-%%H:%%M:%%S%s",
-                 prefix,
-                 suffix);
+      if (snprintf(target, REMAINING_LEN, "%s", suffix) <= 0)
+        DEFER();
     }
-    if (!strftime(name, MAX_TIMESTAMPED_FILE_PATH_LENGTH, pattern, localTime)){
-        free(name); free(pattern);
-        return NULL;
-    }
-    free(pattern);
-    return name;
+    return str;
 }
+#undef DEFER
+#undef REMAINING_LEN
 
 Error readBufferFromFile(FILE* file,
                          char** bufferPtr, size_t* trueBufferSizePtr) {
