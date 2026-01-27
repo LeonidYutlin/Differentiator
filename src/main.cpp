@@ -4,12 +4,12 @@
 #include "math/calc.h"
 #include "io/io.h"
 
-//TODO adapt eval for trees
-//TODO multibyte var names (requires a different memorization system)
-//TODO calculation with given var values
-//TODO Taylor Series
-//TODO partial derivative
-//TODO total derivative
+//TODO: adapt eval for trees
+//TODO: multibyte var names (requires a different memorization system)
+//TODO: calculation with given var values
+//TODO: Taylor Series
+//TODO: partial derivative
+//TODO: total derivative
 int main() {
     const char* TESTS[] = {
         "1",
