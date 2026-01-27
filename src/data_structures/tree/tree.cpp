@@ -2,128 +2,128 @@
 #include <stdlib.h>
 
 #define RETURN_WITH_STATUS(value, returnValue) \
-        {                                      \
-        if (status)                            \
-            *status = value;                   \
-        return returnValue;                    \
-        }
+  {                                            \
+  if (status)                                  \
+      *status = value;                         \
+  return returnValue;                          \
+  }
 
 TreeRoot* attachRoot(TreeNode* node, Error* status) {
-    TreeRoot* root = (TreeRoot*)calloc(1, sizeof(TreeRoot));
-    if (!root)
-        RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
+  TreeRoot* root = (TreeRoot*)calloc(1, sizeof(TreeRoot));
+  if (!root)
+    RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
 
-    root->status = OK;
-    root->rootNode = node;
-    nodeTraverseInfix(node, countNodesCallback, &root->nodeCount);
-    return root;
+  root->status = OK;
+  root->rootNode = node;
+  nodeTraverseInfix(node, countNodesCallback, &root->nodeCount);
+  return root;
 }
 
 TreeNode* detachRoot(TreeRoot* root, Error* status) {
-    if (!root)
-        RETURN_WITH_STATUS(InvalidParameters, NULL);
+  if (!root)
+    RETURN_WITH_STATUS(InvalidParameters, NULL);
 
-    TreeNode* node = root->rootNode;
-    root->rootNode = NULL;
-    treeDestroy(root, true);
-    return node;
+  TreeNode* node = root->rootNode;
+  root->rootNode = NULL;
+  treeDestroy(root, true);
+  return node;
 }
 
 Error treeInit(TreeRoot* root, TreeNode* node, NodeUnit data,
                     TreeNode* left, TreeNode* right) {
-    if (!root || !node)
-        return InvalidParameters;
-    if (root->status != UninitializedTree &&
-        root->status != DestroyedTree)
-        return AttemptedReinitialization;
+  if (!root || !node)
+    return InvalidParameters;
+  if (root->status != UninitializedTree &&
+      root->status != DestroyedTree)
+    return AttemptedReinitialization;
 
-    Error status = nodeInit(node, data, NULL, left, right);
-    if (status)
-        return status;
-    root->rootNode = node;
-    root->nodeCount = 1;
-    root->status = OK;
+  Error status = nodeInit(node, data, NULL, left, right);
+  if (status)
+    return status;
+  root->rootNode = node;
+  root->nodeCount = 1;
+  root->status = OK;
 
-    return OK; //return treeVerify(root);
+  return OK; //return treeVerify(root);
 }
 
 TreeRoot* treeDynamicInit(NodeUnit data,
                           TreeNode* left, TreeNode* right,
                           Error* status) {
-    Error returnedStatus = OK;
-    TreeNode* node = nodeDynamicInit(data, left, right, NULL, &returnedStatus);
-    if (returnedStatus)
-        RETURN_WITH_STATUS(returnedStatus, NULL);
+  Error returnedStatus = OK;
+  TreeNode* node = nodeDynamicInit(data, left, right, NULL, &returnedStatus);
+  if (returnedStatus)
+    RETURN_WITH_STATUS(returnedStatus, NULL);
 
-    TreeRoot* root = attachRoot(node, &returnedStatus);
-    if (returnedStatus)
-        RETURN_WITH_STATUS(returnedStatus, NULL);
+  TreeRoot* root = attachRoot(node, &returnedStatus);
+  if (returnedStatus)
+    RETURN_WITH_STATUS(returnedStatus, NULL);
 
-    return root; //return treeVerify(root);
+  return root; //return treeVerify(root);
 }
 
 TreeRoot* treeRead(FILE* file, Error* status) {
-    if (!file)
-        RETURN_WITH_STATUS(InvalidParameters, NULL);
+  if (!file)
+    RETURN_WITH_STATUS(InvalidParameters, NULL);
 
-    Error returnedStatus = OK;
-    TreeRoot* root = treeDynamicInit((NodeUnit){}, NULL, NULL, &returnedStatus);
-    if (returnedStatus)
-        RETURN_WITH_STATUS(returnedStatus, NULL);
+  Error returnedStatus = OK;
+  TreeRoot* root = treeDynamicInit((NodeUnit){}, NULL, NULL, &returnedStatus);
+  if (returnedStatus)
+    RETURN_WITH_STATUS(returnedStatus, NULL);
 
-    root->nodeCount = 0;
-    TreeNode* node = nodeRead(file, &returnedStatus, &root->nodeCount);
-    if (returnedStatus) {
-        treeDestroy(root, true);
-        RETURN_WITH_STATUS(returnedStatus, NULL);
-    }
+  root->nodeCount = 0;
+  TreeNode* node = nodeRead(file, &returnedStatus, &root->nodeCount);
+  if (returnedStatus) {
+    treeDestroy(root, true);
+    RETURN_WITH_STATUS(returnedStatus, NULL);
+  }
 
-    nodeDestroy(root->rootNode, true);
-    root->rootNode = node;
-    return root;
+  nodeDestroy(root->rootNode, true);
+  root->rootNode = node;
+  return root;
 }
 
 Error treeTraverseInfix(TreeRoot* root,
                         int cb(TreeNode* node, void* data, uint level),
                         void* data, uint level) {
 	if (!root)
-        return OK;
+    return OK;
 
 	return nodeTraverseInfix(root->rootNode, cb, data, level);
 }
 
 Error treePrintPrefix(FILE* f, TreeRoot* root) {
-    if (!root)
-        return InvalidParameters;
+  if (!root)
+    return InvalidParameters;
 
-    return nodePrintPrefix(f, root->rootNode);
+  return nodePrintPrefix(f, root->rootNode);
 }
 
 Error treePrintInfix(FILE* f, TreeRoot* root) {
-    if (!root)
-        return InvalidParameters;
+  if (!root)
+    return InvalidParameters;
 
-    return nodePrintInfix(f, root->rootNode);
+  return nodePrintInfix(f, root->rootNode);
 }
 
 Error treePrintPostfix(FILE* f, TreeRoot* root) {
-    if (!root)
-        return InvalidParameters;
+  if (!root)
+    return InvalidParameters;
 
-    return nodePrintPostfix(f, root->rootNode);
+  return nodePrintPostfix(f, root->rootNode);
 }
 
 Error treeDestroy(TreeRoot* root, bool isAlloced) {
-    if (!root)
-        return InvalidParameters;
+  if (!root)
+    return InvalidParameters;
 
-    nodeDestroy(root->rootNode, isAlloced, NULL);
-    root->status = DestroyedTree;
+  nodeDestroy(root->rootNode, isAlloced, NULL);
+  root->status = DestroyedTree;
 
-    if (isAlloced)
-        free(root);
+  if (isAlloced)
+    free(root);
 
-    return OK;
+  return OK;
 }
 
 #undef RETURN_WITH_STATUS

@@ -7,9 +7,9 @@
 #include "node.h"
 
 struct TreeRoot {
-    Error status = UninitializedTree;
-    size_t nodeCount  = 0;
-    TreeNode* rootNode = NULL;
+  Error status = UninitializedTree;
+  size_t nodeCount  = 0;
+  TreeNode* rootNode = NULL;
 };
 
 TreeRoot* attachRoot(TreeNode* node, Error* status = NULL);

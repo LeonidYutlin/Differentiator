@@ -10,21 +10,21 @@
 #include "../../error/error.h"
 
 union NodeValue {
-    OpType op;
-    char var;
-    double num;
+  OpType op;
+  char var;
+  double num;
 };
 
 struct NodeUnit {
-    NodeType type = UNKNOWN_TYPE;
-    NodeValue value;
+  NodeType type = UNKNOWN_TYPE;
+  NodeValue value;
 };
 
 struct TreeNode {
-    NodeUnit  data   = {};
-    TreeNode* parent = NULL;
-    TreeNode* left   = NULL;
-    TreeNode* right  = NULL;
+  NodeUnit  data   = {};
+  TreeNode* parent = NULL;
+  TreeNode* left   = NULL;
+  TreeNode* right  = NULL;
 };
 
 Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent = NULL,
@@ -41,9 +41,9 @@ typedef Error (*callback_f)(TreeNode* node, void* data, uint level);
 Error nodeTraverseInfix(TreeNode* node,
                         callback_f callbackFunction,
                         void* data = NULL, uint level = 0);
-Error nodeTraversePrefix (TreeNode* node,
-                          callback_f callbackFunction,
-                          void* data = NULL, uint level = 0);
+Error nodeTraversePrefix(TreeNode* node,
+                         callback_f callbackFunction,
+                         void* data = NULL, uint level = 0);
 
 Error countNodesCallback(TreeNode* node, void* data, uint level);
 Error findVariableCallback(TreeNode* node, void* data, uint level);
