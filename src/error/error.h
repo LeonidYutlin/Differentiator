@@ -5,10 +5,10 @@
 #include "modules/generic.h"
 #include "modules/tree.h"
 
-// TODO: X macro for Errors
-
 typedef int Error;
 
+//TODO: whether the error is saved in dt, whether it affects that it may or may not work, is the error soft? Enum?
+//TODO: X macro-ed other enums because you can
 //INFO: Use this one when you want to iterate through every single one, since it keeps the same order
 #define UNITED_ERROR_LIST() \
   GENERIC_ERROR_LIST()      \
@@ -24,12 +24,12 @@ typedef int Error;
 
 enum ErrorModule {
   #define X(enm, ...) enm,
-    ERROR_MODULE_LIST()
+  ERROR_MODULE_LIST()
   #undef X
 };
 enum ErrorEnum {
   #define X(enm, ...) enm,
-    UNITED_ERROR_LIST()
+  UNITED_ERROR_LIST()
   #undef X
 };
 
@@ -50,7 +50,7 @@ struct ErrorInfo {
   const char* desc      = "An error with such error code is not present in ERRORS[]";
 };
 
-ErrorModuleInfo parseErrorModule(ErrorModule module);
-ErrorInfo parseError(Error error);
+const ErrorModuleInfo* parseErrorModule(ErrorModule module);
+const ErrorInfo* parseError(Error error);
 
 #endif

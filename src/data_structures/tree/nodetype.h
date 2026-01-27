@@ -8,84 +8,75 @@
 
 const size_t MAX_VALUE_STRING_LENGTH = 16;
 
+#define NODE_TYPE_LIST()          \
+  X(UNKNOWN_TYPE, "UNKNOWN TYPE") \
+  X(OP_TYPE,      "OP")           \
+  X(NUM_TYPE,     "NUM")          \
+  X(VAR_TYPE,     "VAR")
+
 enum NodeType {
-    UNKNOWN_TYPE,
-    OP_TYPE,
-    NUM_TYPE,
-    VAR_TYPE,
+  #define X(enm, ...) enm,
+  NODE_TYPE_LIST()
+  #undef X
 };
 
-enum OpType {
-    OP_ADD,
-    OP_SUB,
-    OP_MUL,
-    OP_DIV,
-    OP_POW,
-    OP_SIN,
-    OP_COS,
-    OP_TAN,
-    OP_COT,
-    OP_LOG,
-    OP_LN,
-    OP_ASIN,
-    OP_ACOS,
-    OP_ATAN,
-    OP_ACOT,
-    OP_SINH,
-    OP_COSH,
-    OP_TANH,
-    OP_COTH,
+struct NodeTypeInfo{
+  NodeType type = UNKNOWN_TYPE;
+  const char* str = NULL;
 };
 
-#define IS_OP(node)                \
-    (node &&                       \
-     (node)->data.type == OP_TYPE)
+const NodeTypeInfo* parseNodeType(NodeType type);
 
-#define IS_NUM(node)                \
-    (node &&                        \
-     (node)->data.type == NUM_TYPE)
+//NOTE:
+//X(enum, "str", "alrstr", argc, prior, isSupp)
+#define OP_TYPE_LIST()                        \
+  X(OP_ADD,  "+",      NULL,     2, 1, false) \
+  X(OP_SUB,  "-",      NULL,     2, 1, false) \
+  X(OP_MUL,  "*",      NULL,     2, 2, false) \
+  X(OP_DIV,  "/",      NULL,     2, 2, false) \
+  X(OP_POW,  "^",      NULL,     2, 3, false) \
+  X(OP_SIN,  "sin",    NULL,     1, 3, true)  \
+  X(OP_COS,  "cos",    NULL,     1, 3, true)  \
+  X(OP_TAN,  "tan",    "tg",     1, 3, true)  \
+  X(OP_COT,  "cot",    "ctg",    1, 3, true)  \
+  X(OP_LOG,  "log",    NULL,     2, 3, true)  \
+  X(OP_LN,   "ln",     NULL,     1, 3, true)  \
+  X(OP_ASIN, "arcsin", NULL,     1, 3, true)  \
+  X(OP_ACOS, "arccos", NULL,     1, 3, true)  \
+  X(OP_ATAN, "arctan", "arctg",  1, 3, true)  \
+  X(OP_ACOT, "arccot", "arcctg", 1, 3, true)  \
+  X(OP_SINH, "sinh",   "sh",     1, 3, true)  \
+  X(OP_COSH, "cosh",   "ch",     1, 3, true)  \
+  X(OP_TANH, "tanh",   "th",     1, 3, true)  \
+  X(OP_COTH, "coth",   "cth",    1, 3, true)
 
-#define IS_VAR(node)                \
-    (node &&                        \
-     (node)->data.type == VAR_TYPE)
+enum OpType{
+  #define X(enm, ...) enm,
+  OP_TYPE_LIST()
+  #undef X
+};
 
-#define OF_OP(node, opType)           \
-    (IS_OP(node) &&                   \
-     (node)->data.value.op == opType)
+struct OpTypeInfo{
+  OpType type;
+  const char* str = NULL;
+  const char* alt = NULL;
+  uint argCount = 0;
+  uint priority = 0;
+  bool isSupported = false;
+};
 
-#define OF_NUM(node, i)                      \
-    (IS_NUM(node) &&                         \
-     doubleEqual((node)->data.value.num, i))
-
-#define OF_VAR(node, i)           \
-    (IS_VAR(node) &&              \
-     (node)->data.value.var == i)
-
-//TODO more easier non-obvious check (for example priority is 3 but not power)
-#define IS_SUPPORTED_FUNC(opType) \
-        (opType == OP_COS  ||     \
-         opType == OP_SIN  ||     \
-         opType == OP_TAN  ||     \
-         opType == OP_COT  ||     \
-         opType == OP_LOG  ||     \
-         opType == OP_LN   ||     \
-         opType == OP_ASIN ||     \
-         opType == OP_ACOS ||     \
-         opType == OP_ATAN ||     \
-         opType == OP_ACOT ||     \
-         opType == OP_SINH ||     \
-         opType == OP_COSH ||     \
-         opType == OP_TANH ||     \
-         opType == OP_COTH)
-
-const char* getNodeTypeString(NodeType type);
-const char* getOpTypeString(OpType type);
+const OpTypeInfo* parseOpType(OpType type);
 int getOpType(const char* string);
-uint getOpTypeArgumentCount(OpType type);
-uint getOpTypePriority(OpType type);
-//Applies appropriate operation regarding a and b and returns the result.
-//If the operation doesn't require a second parameter (e.g. cos(x)) then leave b as NAN
-//or use default value for b as NAN
+///Applies appropriate operation regarding a and b and returns the result.
+///If the operation doesn't require a second parameter (e.g. cos(x)) then leave b as NAN
+///or use default value for b as NAN
 double applyOperation(OpType type, double a, double b = NAN);
+
+#define IS_OP(node)  ((node) && (node)->data.type == OP_TYPE)
+#define IS_NUM(node) ((node) && (node)->data.type == NUM_TYPE)
+#define IS_VAR(node) ((node) && (node)->data.type == VAR_TYPE)
+#define OF_OP(node, opType) (IS_OP((node)) && (node)->data.value.op == (opType))
+#define OF_NUM(node, i)     (IS_NUM((node)) && doubleEqual((node)->data.value.num, (i)))
+#define OF_VAR(node, i)     (IS_VAR((node)) && (node)->data.value.var == (i))
 
 #endif

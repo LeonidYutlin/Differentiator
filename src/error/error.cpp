@@ -27,14 +27,14 @@ static const ErrorModuleInfo ERROR_MODULES[] = {
 const size_t ERRORS_SIZE        = sizer(ERRORS);
 const size_t ERROR_MODULES_SIZE = sizer(ERROR_MODULES);
 
-ErrorInfo parseError(Error e) {
+const ErrorInfo* parseError(Error e) {
   return (e < 0 || (size_t)e >= ERRORS_SIZE)
-             ? (ErrorInfo){.error = e} //other fields are default, aka "UnknownError"
-             : ERRORS[e];
+         ? NULL
+         : &ERRORS[e];
 }
 
-ErrorModuleInfo parseErrorModule(ErrorModule m) {
-  return (m < 0 || (size_t)m >= ERRORS_SIZE)
-             ? (ErrorModuleInfo){.module = m} //other fields are default, aka "UnknownModule"
-             : ERROR_MODULES[m];
+const ErrorModuleInfo* parseErrorModule(ErrorModule m) {
+  return (m < 0 || (size_t)m >= ERROR_MODULES_SIZE)
+         ? NULL
+         : &ERROR_MODULES[m];
 }

@@ -285,14 +285,14 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
                 DEFAULT_CELL,
                 TABLE_OUTLINE,
                 PARENT_FILL,  node->parent,
-                TYPE_FILL,    getNodeTypeString(node->data.type));
+                TYPE_FILL,    parseNodeType(node->data.type)->str);
     switch(node->data.type) {
         case OP_TYPE:
             fprintf(dot,
                 "<tr>"
                     "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %s</td>"
                 "</tr>",
-                VALUE_FILL, getOpTypeString(node->data.value.op));
+                VALUE_FILL, parseOpType(node->data.value.op)->str);
             break;
         case VAR_TYPE:
             fprintf(dot,

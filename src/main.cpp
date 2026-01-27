@@ -16,24 +16,26 @@ int main() {
            "Total errors : %zu\n",
            ERROR_MODULES_SIZE,
            ERRORS_SIZE);
-    for (int i = 0, m = -1; i < 10; i++) {
-      ErrorInfo err = parseError(i);
-      if (err.module != m) {
-        m = err.module;
-        ErrorModuleInfo mI = parseErrorModule(err.module);
+    for (int i = 0, m = -1; (size_t)i < ERRORS_SIZE; i++) {
+      const ErrorInfo* err = parseError(i);
+      if (!err) continue;
+      if (err->module != m) {
+        m = err->module;
+        const ErrorModuleInfo* mI = parseErrorModule((ErrorModule)m);
+        if (!mI) continue;
         printf("--ERROR MODULE #%d - %s--\n"
                "\tshort desc = %s\n"
                "\tdesc = %s\n",
-               m, mI.str,
-               mI.shortDesc,
-               mI.desc);
+               m, mI->str,
+               mI->shortDesc,
+               mI->desc);
       }
       printf("%d: %s\n"
              "\tshort desc = %s\n"
              "\tdesc = %s\n", 
-             i, err.str, 
-             err.shortDesc, 
-             err.desc);
+             i, err->str, 
+             err->shortDesc, 
+             err->desc);
     }
     return 0;
 

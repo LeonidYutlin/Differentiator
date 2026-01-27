@@ -98,21 +98,28 @@ void closeTexLogFile(FILE* file) {
     fclose(file);
 }
 
+#ifndef DISABLE_NEWLINES
 #define ADD_TO_COUNT(x)                 \
         {                               \
         if (writtenCount)               \
             *writtenCount += (size_t)x; \
         }
-
+#else
+#define ADD_TO_COUNT(x)
+#endif
 static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
                               bool suppressBrackets, bool suppressNewline) {
 	if (!node || !f)
         return;
 
+    //node needs brackets if it's parent exists, we don't suppress brackets,
+    //and the node is either a negative number, it's parent is a supported function
+    //(the parent being OP is implied by it being a parent)
+    //or it is an operator of a lower priority than it's parent
     bool needsBrackets = (node->parent &&
                           !suppressBrackets &&
                           ((IS_NUM(node) && node->data.value.num < 0) ||
-                            IS_SUPPORTED_FUNC(node->parent->data.value.op) ||
+                            parseOpType(node->parent->data.value.op)->isSupported ||
                             (IS_OP(node) && compareParentPriority(node))));
     bool isDivision = OF_OP(node, OP_DIV);
     bool isLog      = (!isDivision &&
@@ -174,9 +181,10 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
                     node->right &&
                     node->right->data.type == VAR_TYPE)) {
                     long written = 0;
-                    const char* opStr = getOpTypeString(opType);
+                    const OpTypeInfo* i = parseOpType(opType);
+                    if (!i) fputs("Error: unknown op type", f);
                     fprintf(f, "%s%s%ln",
-                                IS_SUPPORTED_FUNC(opType) ? "\\" : "", opStr, &written);
+                                i->isSupported ? "\\" : "", i->str, &written);
                     ADD_TO_COUNT(written);
                 }
             }
@@ -193,21 +201,27 @@ static void nodeToTexTraverse(TreeNode* node, FILE* f, size_t* writtenCount,
         fputc(')', f);
         ADD_TO_COUNT(1);
     }
+    #ifndef DISABLE_NEWLINES
     if (!suppressNewline &&
         writtenCount &&
         *writtenCount > MAX_CHAR_PER_LINE) {
-        // fprintf(stderr, "Putting a newline! Currently i am inside %s (%lf) and my suppressNewline is %d\n",
-        //         getOpTypeString((OpType)node->data.value), node->data.value, suppressNewline);
         fputs("\\\\\n", f);
         *writtenCount = 0;
     }
+    #endif
 }
 
 #undef ADD_TO_COUNT
 
+///Returns true if parent has higher priority than the node
 static bool compareParentPriority(TreeNode* node) {
-    assert(node);
-    return getOpTypePriority(node->parent->data.value.op)
-           > getOpTypePriority(node->data.value.op);
+  assert(node);
+  assert(IS_OP(node) &&
+         IS_OP(node->parent));
+
+  const OpTypeInfo* par  = parseOpType(node->parent->data.value.op);
+  const OpTypeInfo* self = parseOpType(node->data.value.op);
+  assert(par && self);
+  return par->priority > self->priority;
 }
 

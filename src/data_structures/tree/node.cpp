@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
 static const char* NULL_STRING_REPRESENTATION   = "nil";
 static size_t NULL_STRING_REPRESENTATION_LENGTH = strlen(NULL_STRING_REPRESENTATION);
@@ -137,7 +138,7 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
             DUMP_ERROR_RETURN("No value in node");
 
         uint expectedChildN = data.type == OP_TYPE
-                              ? getOpTypeArgumentCount(data.value.op)
+                              ? parseOpType(data.value.op)->argCount
                               : 0;
 
         TreeNode* left  = nodeReadRecursion(buf, bufSize, pos, status, nodeCount);
@@ -233,7 +234,7 @@ Error nodePrintPrefix(FILE* f, TreeNode* node) {
     switch (node->data.type) {
         case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
         case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
-        case OP_TYPE : fprintf(f, "%s",  getOpTypeString(node->data.value.op)); break;
+        case OP_TYPE : fprintf(f, "%s",  parseOpType(node->data.value.op)->str); break;
         default: break;
     }
     nodePrintPrefix(f, node->left);
@@ -251,7 +252,7 @@ Error nodePrintInfix(FILE* f, TreeNode* node) {
     switch (node->data.type) {
         case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
         case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
-        case OP_TYPE : fprintf(f, "%s",  getOpTypeString(node->data.value.op)); break;
+        case OP_TYPE : fprintf(f, "%s",  parseOpType(node->data.value.op)->str); break;
         default: break;
     }
     nodePrintPrefix(f, node->right);
@@ -269,7 +270,7 @@ Error nodePrintPostfix(FILE* f, TreeNode* node) { ///// ?
     switch (node->data.type) {
         case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
         case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
-        case OP_TYPE : fprintf(f, "%s",  getOpTypeString(node->data.value.op)); break;
+        case OP_TYPE : fprintf(f, "%s",  parseOpType(node->data.value.op)->str); break;
         default: break;
     }
     fputc(')', f);
@@ -367,8 +368,9 @@ static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* st
                                  OF_NUM(node->left, 1));
 
     OpType opType = node->data.value.op;
-    uint argCount = getOpTypeArgumentCount(opType);
-    switch (argCount) {
+    const OpTypeInfo* i = parseOpType(opType);
+    assert(i);
+    switch (i->argCount) {
         case 1: {
             double rightVal = IS_NUM(node->right)
                               ? node->right->data.value.num
