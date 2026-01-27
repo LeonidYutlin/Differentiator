@@ -7,8 +7,7 @@
 
 typedef int Error;
 
-//TODO: whether the error is saved in dt, whether it affects that it may or may not work, is the error soft? Enum?
-//TODO: X macro-ed other enums because you can
+//TODO: whether the error is saved in dt, whether verify passes with it (is it soft, fatal or ...)
 //INFO: Use this one when you want to iterate through every single one, since it keeps the same order
 #define UNITED_ERROR_LIST() \
   GENERIC_ERROR_LIST()      \
