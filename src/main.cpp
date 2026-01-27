@@ -3,6 +3,7 @@
 #include "math/diff.h"
 #include "math/calc.h"
 #include "io/io.h"
+#include "error/error.h"
 
 //TODO: adapt eval for trees
 //TODO: multibyte var names (requires a different memorization system)
@@ -11,6 +12,31 @@
 //TODO: partial derivative
 //TODO: total derivative
 int main() {
+    printf("Total modules: %zu\n"
+           "Total errors : %zu\n",
+           ERROR_MODULES_SIZE,
+           ERRORS_SIZE);
+    for (int i = 0, m = -1; i < 10; i++) {
+      ErrorInfo err = parseError(i);
+      if (err.module != m) {
+        m = err.module;
+        ErrorModuleInfo mI = parseErrorModule(err.module);
+        printf("--ERROR MODULE #%d - %s--\n"
+               "\tshort desc = %s\n"
+               "\tdesc = %s\n",
+               m, mI.str,
+               mI.shortDesc,
+               mI.desc);
+      }
+      printf("%d: %s\n"
+             "\tshort desc = %s\n"
+             "\tdesc = %s\n", 
+             i, err.str, 
+             err.shortDesc, 
+             err.desc);
+    }
+    return 0;
+
     const char* TESTS[] = {
         "1",
         "10+3",

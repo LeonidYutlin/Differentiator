@@ -7,7 +7,7 @@
 #include <math.h>
 #include <sys/types.h>
 #include "nodetype.h"
-#include "../../misc/error.h"
+#include "../../error/error.h"
 
 union NodeValue {
     OpType op;
@@ -25,13 +25,6 @@ struct TreeNode {
     TreeNode* parent = NULL;
     TreeNode* left   = NULL;
     TreeNode* right  = NULL;
-};
-
-enum TreeStatus {
-    UninitializedTree = NON_GENERIC_ERROR,
-    DestroyedTree,
-    AttemptedReinitialization,
-    FailReadNode,
 };
 
 Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent = NULL,

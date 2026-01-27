@@ -1,0 +1,56 @@
+#ifndef ERROR_H
+#define ERROR_H
+
+#include <stddef.h>
+#include "modules/generic.h"
+#include "modules/tree.h"
+
+// TODO: X macro for Errors
+
+typedef int Error;
+
+//INFO: Use this one when you want to iterate through every single one, since it keeps the same order
+#define UNITED_ERROR_LIST() \
+  GENERIC_ERROR_LIST()      \
+  TREE_STATUS_LIST()
+
+#define ERROR_MODULE_LIST()                               \
+  X(Generic,                                              \
+    "Generic Errors",                                     \
+    "Common errors across the whole project")             \
+  X(Tree,                                                 \
+    "Tree/Node Errors",                                   \
+    "Errors related to TreeRoot/TreeNode datastructures") \
+
+enum ErrorModule {
+  #define X(enm, ...) enm,
+    ERROR_MODULE_LIST()
+  #undef X
+};
+enum ErrorEnum {
+  #define X(enm, ...) enm,
+    UNITED_ERROR_LIST()
+  #undef X
+};
+
+extern const size_t ERROR_MODULES_SIZE;
+extern const size_t ERRORS_SIZE;
+
+struct ErrorModuleInfo {
+  ErrorModule module;
+  const char* str       = "UnknownModule";
+  const char* shortDesc = "Unknown module";
+  const char* desc      = "A module with such value of enum is not present in ERROR_MODULES[]";
+};
+struct ErrorInfo {
+  Error error = -1;
+  ErrorModule module = Generic;
+  const char* str       = "UnknownError";
+  const char* shortDesc = "Unknown error";
+  const char* desc      = "An error with such error code is not present in ERRORS[]";
+};
+
+ErrorModuleInfo parseErrorModule(ErrorModule module);
+ErrorInfo parseError(Error error);
+
+#endif

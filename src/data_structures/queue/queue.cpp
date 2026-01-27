@@ -16,10 +16,11 @@ Error dequeue(Queue** q, QueueUnit* data) {
 	Queue* tail = (*q)->next;
 
 	*data = tail->data;
-	if (*q != tail)
+	if (*q != tail) {
 		(*q)->next = tail->next;
-	else
+  } else {
 		*q = NULL;
+  }
 	free(tail);
 	return OK;
 }

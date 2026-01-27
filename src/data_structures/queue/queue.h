@@ -1,7 +1,7 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include "../../misc/error.h"
+#include "../../error/error.h"
 #include "../tree/node.h"
 
 typedef TreeNode* QueueUnit;
