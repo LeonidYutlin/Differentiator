@@ -155,7 +155,7 @@ static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
       return NULL;
     }
 
-    uint childN = (left != NULL) + (right != NULL);
+    uint childN = (uint)(left != NULL) + (uint)(right != NULL);
     if (expectedChildN != childN) {
       nodeDestroy(left, true);
       nodeDestroy(right, true);
@@ -314,7 +314,7 @@ void nodeFixParents(TreeNode* node) {
 }
 
 Error nodeChangeChild(TreeNode* parent, TreeNode* child, TreeNode* newChild, size_t* nodeCount) {
-  TreeNode** childPath = NULL;'
+  TreeNode** childPath = NULL;
   if (!parent) {
     if (newChild)
       newChild->parent = parent;

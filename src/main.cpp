@@ -12,32 +12,32 @@
 //TODO: partial derivative
 //TODO: total derivative
 int main() {
-  printf("Total modules: %zu\n"
-         "Total errors : %zu\n",
-         ERROR_MODULES_SIZE,
-         ERRORS_SIZE);
-  for (int i = 0, m = -1; (size_t)i < ERRORS_SIZE; i++) {
-    const ErrorInfo* err = parseError(i);
-    if (!err) continue;
-    if (err->module != m) {
-      m = err->module;
-      const ErrorModuleInfo* mI = parseErrorModule((ErrorModule)m);
-      if (!mI) continue;
-      printf("--ERROR MODULE #%d - %s--\n"
-             "\tshort desc = %s\n"
-             "\tdesc = %s\n",
-             m, mI->str,
-             mI->shortDesc,
-             mI->desc);
-    }
-    printf("%d: %s\n"
-           "\tshort desc = %s\n"
-           "\tdesc = %s\n", 
-           i, err->str, 
-           err->shortDesc, 
-           err->desc);
-  }
-  return 0;
+  // printf("Total modules: %zu\n"
+  //        "Total errors : %zu\n",
+  //        ERROR_MODULES_SIZE,
+  //        ERRORS_SIZE);
+  // for (int i = 0, m = -1; (size_t)i < ERRORS_SIZE; i++) {
+  //   const ErrorInfo* err = parseError(i);
+  //   if (!err) continue;
+  //   if (err->module != m) {
+  //     m = err->module;
+  //     const ErrorModuleInfo* mI = parseErrorModule((ErrorModule)m);
+  //     if (!mI) continue;
+  //     printf("--ERROR MODULE #%d - %s--\n"
+  //            "\tshort desc = %s\n"
+  //            "\tdesc = %s\n",
+  //            m, mI->str,
+  //            mI->shortDesc,
+  //            mI->desc);
+  //   }
+  //   printf("%d: %s\n"
+  //          "\tshort desc = %s\n"
+  //          "\tdesc = %s\n", 
+  //          i, err->str, 
+  //          err->shortDesc, 
+  //          err->desc);
+  // }
+  // return 0;
 
   const char* TESTS[] = {
     "1",
@@ -55,7 +55,7 @@ int main() {
   }
 
 
-  //FILE* log = initHtmlLogFile();
+  FILE* log = initHtmlLogFile();
   FILE* tex = initTexLogFile();
 
   FILE* expr = fopen(".test/expr_test.txt", "r");
@@ -65,15 +65,15 @@ int main() {
     return 1;
   }
   fclose(expr);
-  //treeDump(log, tree, "<b3>Read tree</b3>");
+  treeDump(log, tree, "<b3>Read tree</b3>");
   treeToTex(tex, tree);
   TreeNode* diffTreeX = differentiate(tree->rootNode, 'x', tex);
   // TreeNode* diffTreeY = differentiate(tree->rootNode, 'y', tex);
   // TreeNode* diffTreeZ = differentiate(tree->rootNode, 'z', tex);
-  //nodeDump(log, diffTreeX, "<b3> tree after diff </b3>");
+  nodeDump(log, diffTreeX, "<b3> tree after diff </b3>");
   nodeToTex(tex, diffTreeX);
   closeTexLogFile(tex);
-  // fclose(log);
+  fclose(log);
 
   treeDestroy(tree, true);
   nodeDestroy(diffTreeX, true);
