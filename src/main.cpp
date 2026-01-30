@@ -5,6 +5,7 @@
 #include "io/io.h"
 #include "error/error.h"
 
+//WE ARE CHARLIE KIRK
 //TODO: adapt eval for trees
 //TODO: multibyte var names (requires a different memorization system)
 //TODO: calculation with given var values
