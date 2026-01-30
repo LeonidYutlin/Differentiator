@@ -38,3 +38,37 @@ const ErrorModuleInfo* parseErrorModule(ErrorModule m) {
          ? NULL
          : &ERROR_MODULES[m];
 }
+
+Error dumpErrors(FILE* file) {
+  if (!file)
+    return InvalidParameters;
+
+  fprintf(file, 
+          "Total modules: %zu\n"
+          "Total errors : %zu\n",
+          ERROR_MODULES_SIZE,
+          ERRORS_SIZE);
+  for (int i = 0, m = -1; (size_t)i < ERRORS_SIZE; i++) {
+    const ErrorInfo* err = parseError(i);
+    if (!err) continue;
+    if (err->module != m) {
+      m = err->module;
+      const ErrorModuleInfo* mI = parseErrorModule((ErrorModule)m);
+      if (!mI) continue;
+      fprintf(file,
+              "--ERROR MODULE #%d - %s--\n"
+              "\tshort desc = %s\n"
+              "\tdesc = %s\n",
+              m, mI->str,
+              mI->shortDesc,
+              mI->desc);
+    }
+    fprintf(file, 
+            "%d: %s\n"
+            "\tshort desc = %s\n"
+            "\tdesc = %s\n", 
+            i, err->str, 
+            err->shortDesc, 
+            err->desc);
+  }
+}

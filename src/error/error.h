@@ -2,6 +2,7 @@
 #define ERROR_H
 
 #include <stddef.h>
+#include <stdio.h>
 #include "modules/generic.h"
 #include "modules/tree.h"
 
@@ -51,5 +52,7 @@ struct ErrorInfo {
 
 const ErrorModuleInfo* parseErrorModule(ErrorModule module);
 const ErrorInfo* parseError(Error error);
+
+Error dumpErrors(FILE* file);
 
 #endif
