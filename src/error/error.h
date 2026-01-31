@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "modules/generic.h"
 #include "modules/tree.h"
+#include "modules/variables.h"
 
 typedef int Error;
 
@@ -12,15 +13,19 @@ typedef int Error;
 //INFO: Use this one when you want to iterate through every single one, since it keeps the same order
 #define UNITED_ERROR_LIST() \
   GENERIC_ERROR_LIST()      \
-  TREE_STATUS_LIST()
+  TREE_STATUS_LIST()        \
+  VARIABLES_STATUS_LIST()
 
 #define ERROR_MODULE_LIST()                               \
-  X(Generic,                                              \
+  X(GenericError,                                         \
     "Generic Errors",                                     \
     "Common errors across the whole project")             \
-  X(Tree,                                                 \
+  X(TreeError,                                            \
     "Tree/Node Errors",                                   \
     "Errors related to TreeRoot/TreeNode datastructures") \
+  X(VariablesError,                                       \
+    "Variables Errors",                                   \
+    "Errors related to dyn array of variables - Variables")
 
 enum ErrorModule {
   #define X(enm, ...) enm,
@@ -44,7 +49,7 @@ struct ErrorModuleInfo {
 };
 struct ErrorInfo {
   Error error = -1;
-  ErrorModule module = Generic;
+  ErrorModule module = GenericError;
   const char* str       = "UnknownError";
   const char* shortDesc = "Unknown error";
   const char* desc      = "An error with such error code is not present in ERRORS[]";

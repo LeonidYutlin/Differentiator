@@ -3,22 +3,22 @@
 
 #define TREE_STATUS_LIST()                                     \
   X(UninitializedTree,                                         \
-    Tree,                                                      \
+    TreeError,                                                 \
     "Tree is uninitialized",                                   \
     "Tree is uninitialized, "                                  \
-    "use nodeInit()/nodeDynamicInit() or tree- counterparts")  \
+    "use nodeInit()/nodeAlloc() or tree- counterparts")        \
   X(DestroyedTree,                                             \
-    Tree,                                                      \
+    TreeError,                                                 \
     "Tree is destroyed",                                       \
     "Tree has been destroyed before, "                         \
     "use initializers to reinit it")                           \
   X(AttemptedReinitialization,                                 \
-    Tree,                                                      \
+    TreeError,                                                 \
     "Attempted to reinitialize a working tree",                \
     "Attempted to reinitialize a working tree, "               \
     "if you wish to reinit this tree, destroy it and init it") \
   X(FailReadNode,                                              \
-    Tree,                                                      \
+    TreeError,                                                 \
     "Failed to read node",                                     \
     "Failed to read node, due to incorrect syntax. "           \
     "See logs for more info")

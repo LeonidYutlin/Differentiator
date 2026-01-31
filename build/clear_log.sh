@@ -1,11 +1,25 @@
 #!/bin/bash
 
-set -xe
+VERBOSE=false
+
+while getopts "v" flag; 
+do
+  case "$flag" in
+    v) VERBOSE=true ;;
+  esac
+done
+
+if $VERBOSE; 
+then
+  set -xe
+else
+  set -e 
+fi
 
 LOG_PATH=".log/"
 
 SAVED_DIR=$(pwd)
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd )
+SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 cd $SCRIPT_DIR
 until test -e ".git" 
 do

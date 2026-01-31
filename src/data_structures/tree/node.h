@@ -11,7 +11,7 @@
 
 union NodeValue {
   OpType op;
-  char var;
+  size_t var; //var_id actually
   double num;
 };
 
@@ -29,11 +29,9 @@ struct TreeNode {
 
 Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent = NULL,
                TreeNode* left = NULL, TreeNode* right = NULL);
-TreeNode*  nodeDynamicInit(NodeUnit data, TreeNode* parent = NULL,
-                           TreeNode* left = NULL, TreeNode* right = NULL,
-                           Error* status = NULL);
-
-TreeNode* nodeRead(FILE* file, Error* status = NULL, size_t* nodeCount = NULL);
+TreeNode* nodeAlloc(NodeUnit data, TreeNode* parent = NULL,
+                    TreeNode* left = NULL, TreeNode* right = NULL,
+                    Error* status = NULL);
 
 /// Universal infix traverse - stops if callbackFunction returns true
 typedef Error (*callback_f)(TreeNode* node, void* data, uint level);
@@ -49,10 +47,6 @@ Error countNodesCallback(TreeNode* node, void* data, uint level);
 Error findVariableCallback(TreeNode* node, void* data, uint level);
 // copy-paste postfix traverses...
 
-Error nodePrintPrefix (FILE* file, TreeNode* node);
-Error nodePrintInfix  (FILE* file, TreeNode* node);
-Error nodePrintPostfix(FILE* file, TreeNode* node);
-
 //Takes parent, seaches for child as its child, replaces that child with newChild and frees child
 //Note: if your newChild and child are in a relationship then you should make sure they aren't by
 //breaking the bound before calling the function
@@ -66,5 +60,13 @@ Error nodeOptimize(TreeNode** node);
 
 Error  nodeDelete(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
 Error nodeDestroy(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
+
+//struct Variables; //a promise that variables will be properly included
+#include "../../diff/context.h"
+
+struct FindVarCBData {
+  const char* var;
+  Variables* vars;
+};
 
 #endif

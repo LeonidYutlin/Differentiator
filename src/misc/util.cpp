@@ -4,9 +4,10 @@
 #include <time.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <float.h>
 
 static const size_t TIMESTAMP_LEN = 128;
-static const double DOUBLE_COMPARISON_PRECISION = 1e-9;
+static const double DOUBLE_COMPARISON_PRECISION = DBL_EPSILON;
 
 bool doubleEqual(double a, double b) {
   return fabs(a - b) < DOUBLE_COMPARISON_PRECISION;

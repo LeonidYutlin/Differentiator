@@ -6,10 +6,10 @@
 
 typedef TreeNode* QueueUnit;
 
-typedef struct Queue {
+struct Queue {
 	QueueUnit data;
 	struct Queue* next;
-} Queue;
+};
 
 Error enqueue(Queue** queue, QueueUnit data);
 Error dequeue(Queue** queue, QueueUnit* data);

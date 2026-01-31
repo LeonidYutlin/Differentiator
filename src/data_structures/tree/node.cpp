@@ -5,11 +5,6 @@
 #include <string.h>
 #include <assert.h>
 
-static const char* NULL_STRING_REPRESENTATION   = "nil";
-static size_t NULL_STRING_REPRESENTATION_LENGTH = strlen(NULL_STRING_REPRESENTATION);
-
-static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
-                                   Error* status, size_t* nodeCount);
 static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status = NULL);
 static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
 
@@ -37,7 +32,7 @@ Error nodeInit(TreeNode* node, NodeUnit data, TreeNode* parent,
   return OK;
 }
 
-TreeNode*  nodeDynamicInit(NodeUnit data, TreeNode* parent,
+TreeNode*  nodeAlloc(NodeUnit data, TreeNode* parent,
                            TreeNode* left, TreeNode* right,
                            Error* status) {
   TreeNode* node = (TreeNode*)calloc(1, sizeof(TreeNode));
@@ -55,151 +50,6 @@ TreeNode*  nodeDynamicInit(NodeUnit data, TreeNode* parent,
 
   return node;
 }
-
-TreeNode* nodeRead(FILE* f, Error* status, size_t* nodeCount) {
-  char* buffer = NULL;
-  size_t bufferSize = 0;
-  if (readBufferFromFile(f, &buffer, &bufferSize))
-    RETURN_WITH_STATUS(FailMemoryAllocation, NULL);
-
-  Error returnedStatus = OK;
-  size_t pos = 0;
-  TreeNode* node = nodeReadRecursion(buffer, bufferSize, &pos, &returnedStatus, nodeCount);
-  free(buffer);
-  if (returnedStatus)
-    RETURN_WITH_STATUS(returnedStatus, NULL);
-  return node;
-}
-
-#define DUMP_ERROR_RETURN(commentary)                      \
-  {                                                        \
-  fprintf(stderr,                                          \
-          "[ERROR]: Failed to read node at position %lu\n" \
-          "Comment: %s\n"                                  \
-          "\tLine snippet:\n"                              \
-          "\t->%.10s...\n",                                \
-          *pos,                                            \
-          commentary,                                      \
-          buf + *pos);                                     \
-  RETURN_WITH_STATUS(FailReadNode, NULL);                  \
-  }
-
-#define SKIP_WHITESPACE        \
-  while (isspace(buf[*pos])) { \
-      (*pos)++;                \
-  }
-
-static TreeNode* nodeReadRecursion(char* buf, size_t bufSize, size_t* pos,
-                                   Error* status, size_t* nodeCount) {
-  if (!buf || *pos >= bufSize)
-    RETURN_WITH_STATUS(InvalidParameters, NULL);
-
-  // fprintf(stderr,
-  //             "[INFO]: at position %lu\n"
-  //             "\tLine snippet:\n"
-  //             "\t->%.10s...\n",
-  //             *pos,
-  //             buf + *pos);
-  SKIP_WHITESPACE;
-  if (buf[*pos] == '(') {
-    (*pos)++;
-    SKIP_WHITESPACE;
-    NodeUnit data = {};
-    int charReadN = 0;
-    if (isdigit(buf[*pos]) ||
-        (buf[*pos] == '-' && isdigit(buf[*pos + 1]))) {
-      if (sscanf(buf + *pos,
-                 "%lg%n",
-                 &data.value.num, &charReadN) != 1)
-        DUMP_ERROR_RETURN("No valid value in node");
-      data.type = NUM_TYPE;
-      *pos += (size_t)charReadN;
-    } else {
-      char valStr[MAX_VALUE_STRING_LENGTH] = {0};
-      if (sscanf(buf + *pos,
-                 "%s%n",
-                 valStr, &charReadN) != 1)
-        DUMP_ERROR_RETURN("No valid var/op value in node");
-      int opType = getOpType(valStr);
-      //fprintf(stderr, "returned opType %d\n", opType);
-      if (opType >= 0) {
-        data.value.op = (OpType)opType;
-        data.type = OP_TYPE;
-        *pos += (size_t)charReadN;
-      } else if (charReadN == 1){
-        data.value.var = buf[*pos];
-        data.type = VAR_TYPE;
-        *pos += (size_t)charReadN;
-      } else {
-        DUMP_ERROR_RETURN("Bad variable name in node (longer than 1 char?)");
-      }
-    }
-    if (data.type == UNKNOWN_TYPE)
-      DUMP_ERROR_RETURN("No value in node");
-
-    uint expectedChildN = data.type == OP_TYPE
-                          ? parseOpType(data.value.op)->argCount
-                          : 0;
-
-    TreeNode* left  = nodeReadRecursion(buf, bufSize, pos, status, nodeCount);
-    if (*status) {
-      nodeDestroy(left, true);
-      return NULL;
-    }
-    TreeNode* right = nodeReadRecursion(buf, bufSize, pos, status, nodeCount);
-    if (*status) {
-      //Я знаю что тут всегда ноды и так нулевой указатель
-      //однако на будущие случаи лучше иметь деструктор чем не иметь
-      nodeDestroy(left, true);
-      nodeDestroy(right, true);
-      return NULL;
-    }
-
-    uint childN = (uint)(left != NULL) + (uint)(right != NULL);
-    if (expectedChildN != childN) {
-      nodeDestroy(left, true);
-      nodeDestroy(right, true);
-      DUMP_ERROR_RETURN("Node has too few or too many null children!");
-    }
-
-    //fprintf(stderr, "Pos is %lu BufSize is %lu\n", *pos, bufSize);
-    SKIP_WHITESPACE;
-    if (buf[*pos] == ')') {
-      (*pos)++;
-    } else {
-      nodeDestroy(left, true);
-      nodeDestroy(right, true);
-      DUMP_ERROR_RETURN("No closing parenthesis");
-    }
-
-    TreeNode* node = nodeDynamicInit(data, NULL, left, right, status);
-    if (*status) {
-      nodeDelete(left, true);
-      nodeDelete(right, true);
-      nodeDestroy(node, true);
-      return NULL;
-    }
-
-    if (node->left)
-      node->left->parent  = node;
-    if (node->right)
-      node->right->parent = node;
-
-    if (nodeCount)
-      (*nodeCount)++;
-    return node;
-  } else if (strncmp(buf + *pos,
-                     NULL_STRING_REPRESENTATION,
-                     NULL_STRING_REPRESENTATION_LENGTH) == 0) {
-    *pos += NULL_STRING_REPRESENTATION_LENGTH;
-    return NULL;
-  }
-
-  DUMP_ERROR_RETURN("Illegal character at the start of a node declaration");
-}
-
-#undef DUMP_ERROR_RETURN
-#undef SKIP_WHITESPACE
 
 Error nodeTraverseInfix(TreeNode* node,
                         int cb(TreeNode* node, void* data, uint level),
@@ -223,63 +73,12 @@ Error nodeTraversePrefix(TreeNode* node,
          nodeTraversePrefix(node->right, cb, data, level + 1);
 }
 
-Error nodePrintPrefix(FILE* f, TreeNode* node) {
-  if (!node)
-    return InvalidParameters;
-
-  fputc('(', f);
-  switch (node->data.type) {
-    case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
-    case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
-    case OP_TYPE : fprintf(f, "%s",  parseOpType(node->data.value.op)->str); break;
-    default: break;
-  }
-  nodePrintPrefix(f, node->left);
-  nodePrintPrefix(f, node->right);
-  fputc(')', f);
-  return OK;
-}
-
-Error nodePrintInfix(FILE* f, TreeNode* node) {
-  if (!node)
-    return InvalidParameters;
-
-  fputc('(', f);
-  nodePrintPrefix(f, node->left);
-  switch (node->data.type) {
-    case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
-    case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
-    case OP_TYPE : fprintf(f, "%s",  parseOpType(node->data.value.op)->str); break;
-    default: break;
-  }
-  nodePrintPrefix(f, node->right);
-  fputc(')', f);
-  return OK;
-}
-
-Error nodePrintPostfix(FILE* f, TreeNode* node) { ///// ?
-  if (!node)
-    return InvalidParameters;
-
-  fputc('(', f);
-  nodePrintPrefix(f, node->left);
-  nodePrintPrefix(f, node->right);
-  switch (node->data.type) {
-    case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
-    case VAR_TYPE: fprintf(f, "%c",  node->data.value.var); break;
-    case OP_TYPE : fprintf(f, "%s",  parseOpType(node->data.value.op)->str); break;
-    default: break;
-  }
-  fputc(')', f);
-  return OK;
-}
-
 TreeNode* nodeCopy(TreeNode* src, TreeNode* newParent, Error* status) {
   if (!src)
     RETURN_WITH_STATUS(InvalidParameters, NULL);
 
   Error returnedStatus = OK;
-  TreeNode* copy = nodeDynamicInit({src->data.type, src->data.value}, newParent,
+  TreeNode* copy = nodeAlloc({src->data.type, src->data.value}, newParent,
                                    NULL, NULL, &returnedStatus);
   if (returnedStatus) {
     nodeDestroy(copy, true);
@@ -521,10 +320,9 @@ Error nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
   return OK;
 }
 
-
-Error countNodesCallback(__attribute__ ((unused))TreeNode* node, 
+Error countNodesCallback(unused TreeNode* node, 
                          void* data, 
-                         __attribute__ ((unused))uint level) {
+                         unused uint level) {
   size_t* nodeCount = (size_t*)data;
   (*nodeCount)++;
   return OK;
@@ -532,9 +330,9 @@ Error countNodesCallback(__attribute__ ((unused))TreeNode* node,
 
 // here non-zero return is treated as found variable
 Error findVariableCallback(TreeNode* node, void* data, 
-                           __attribute__ ((unused))uint level) {
-  char* var = (char*)data;
-  if (OF_VAR(node, *var))
+                           unused uint level) {
+  FindVarCBData* cbData = (FindVarCBData*)data;
+  if (OF_VAR(cbData->vars, node, cbData->var))
     return 1;
   return OK;
 }

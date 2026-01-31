@@ -37,15 +37,16 @@ static const char* ROOT_FILL     = "#DDDDDD";
 static int treeTextDump(FILE* f, TreeRoot* root,
                         const char* commentary, const char* filename, int line,
                         uint callCount);
-static int treeGraphDump(FILE* f, TreeRoot* root, uint callCount);
-static void populateDot(FILE* dot, TreeNode* node);
-static void declareNode(FILE* dot, TreeNode* node, bool bondFailed = false);
+static int treeGraphDump(FILE* f,  Variables* vars, TreeRoot* root, uint callCount);
+static void populateDot(FILE* dot, Variables* vars, TreeNode* node);
+static void declareNode(FILE* dot, Variables* vars, TreeNode* node, bool bondFailed = false);
 static void declareRank(FILE* dot, TreeNode* node, Queue** queue);
 static void executeDot(FILE* f, uint callCount, char* dotPath);
 
 #define WARNING_PREFIX(condition) (condition) ? "<b><body><font color=\"red\">[!]</font></body></b>" : ""
 
-void treeDump(FILE* f, TreeRoot* root, const char* commentary, const char* filename, int line) {
+void treeDump(FILE* f, Variables* vars, TreeRoot* root, 
+              const char* commentary, const char* filename, int line) {
   assert(f);
   assert(filename);
   assert(commentary);
@@ -56,7 +57,7 @@ void treeDump(FILE* f, TreeRoot* root, const char* commentary, const char* filen
   if (treeTextDump(f, root, commentary, filename, line, callCount))
     return;
 
-  treeGraphDump(f, root, callCount);
+  treeGraphDump(f, vars, root, callCount);
 }
 
 #define DOT_HEADER_INIT(file)                                                               \
@@ -72,7 +73,8 @@ void treeDump(FILE* f, TreeRoot* root, const char* commentary, const char* filen
           BAD_OUTLINE, BAD_FILL,                                                            \
           BG_COLOR);
 
-void nodeDump(FILE* f, TreeNode* node, const char* commentary, const char* filename, int line) {
+void nodeDump(FILE* f, Variables* vars, TreeNode* node, 
+              const char* commentary, const char* filename, int line) {
   assert(f);
   assert(filename);
   assert(commentary);
@@ -107,7 +109,7 @@ void nodeDump(FILE* f, TreeNode* node, const char* commentary, const char* filen
     return;
   }
   DOT_HEADER_INIT(dot);
-  populateDot(dot, node);
+  populateDot(dot, vars, node);
   fputs("}\n", dot);
   fclose(dot);
   fputs("Graphical Dump:\n", f);
@@ -115,7 +117,7 @@ void nodeDump(FILE* f, TreeNode* node, const char* commentary, const char* filen
   free(dotPath);
 }
 
-FILE* initHtmlLogFile() {
+FILE* openHtmlLogFile() {
   time_t timeAbs = time(NULL);
   char* name = getTimestampedString(".log/", ".html");
   if (!name)
@@ -135,6 +137,11 @@ FILE* initHtmlLogFile() {
   free(name);
   return f;
 }
+
+void closeHtmlLogFile(FILE* f) {
+  if (f)
+    fclose(f);
+} 
 
 static int treeTextDump(FILE* f, TreeRoot* root,
                         const char* commentary, const char* filename, int line,
@@ -169,8 +176,9 @@ static int treeTextDump(FILE* f, TreeRoot* root,
   return !root->rootNode ? -1 : 0;
 }
 
-static int treeGraphDump(FILE* f, TreeRoot* root, uint callCount) {
+static int treeGraphDump(FILE* f, Variables* vars, TreeRoot* root, uint callCount) {
   assert(f);
+  assert(!varsVerify(vars));
   assert(root);
 
   char* dotPath = getTimestampedString(".log/dot-", ".txt", callCount);
@@ -217,7 +225,7 @@ static int treeGraphDump(FILE* f, TreeRoot* root, uint callCount) {
           TABLE_FILL, root,
           TABLE_FILL, root->rootNode);
 
-  populateDot(dot, root->rootNode);
+  populateDot(dot, vars, root->rootNode);
 
   fprintf(dot, "root -> node%p [color=\"%s\"]\n", root->rootNode, OK_EDGE);
   fputs("}\n", dot);
@@ -232,11 +240,12 @@ static int treeGraphDump(FILE* f, TreeRoot* root, uint callCount) {
 
 #undef DOT_HEADER_INIT
 
-static void populateDot(FILE* dot, TreeNode* node) {
+static void populateDot(FILE* dot, Variables* vars, TreeNode* node) {
   assert(dot);
+  assert(!varsVerify(vars));
   assert(node);
 
-  declareNode(dot, node);
+  declareNode(dot, vars, node);
   Queue* queue = NULL;
   declareRank(dot, node, &queue);
 }
@@ -247,19 +256,21 @@ static void populateDot(FILE* dot, TreeNode* node) {
      if (child->parent == node) {                                                 \
        fprintf(dot, "node%p -> node%p [color=\"%s\", arrowtail=vee, dir=both]\n", \
                node, child, OK_EDGE);                                             \
-       declareNode(dot, child);                                                   \
+       declareNode(dot, vars, child);                                             \
      } else {                                                                     \
        fprintf(dot, "node%p -> node%p [color=\"%s\"]\n", node, child, BAD_EDGE);  \
-       declareNode(dot, child, true);                                             \
+       declareNode(dot, vars, child, true);                                       \
      }                                                                            \
    }                                                                              \
    }
 
-static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
+static void declareNode(FILE* dot, Variables* vars, TreeNode* node, bool bondFailed) {
   assert(dot);
+  assert(!varsVerify(vars));
   if (!node)
     return;
-
+  
+  const NodeTypeInfo* nodeInfo = parseNodeType(node->data.type);
   fprintf(dot,
           "node%p"
           "[shape=box, style=\"rounded, filled\", color=\"%s\", fillcolor=\"%s\", penwidth=2.1, fontsize=14, label="
@@ -272,32 +283,41 @@ static void declareNode(FILE* dot, TreeNode* node, bool bondFailed) {
           "</tr>",
           node,
           TABLE_OUTLINE,
-          node->data.type == OP_TYPE  ? OP_CELL  :
-          node->data.type == NUM_TYPE ? NUM_CELL :
-          node->data.type == VAR_TYPE ? VAR_CELL :
+          IS_OP(node)  ? OP_CELL  :
+          IS_NUM(node) ? NUM_CELL :
+          IS_VAR(node) ? VAR_CELL :
           DEFAULT_CELL,
           TABLE_OUTLINE,
           PARENT_FILL,  node->parent,
-          TYPE_FILL,    parseNodeType(node->data.type)->str);
+          nodeInfo ? TYPE_FILL     : BAD_FILL,  
+          nodeInfo ? nodeInfo->str : "ERROR: no info for such NodeType");
   switch(node->data.type) {
     case OP_TYPE:
-      fprintf(dot,
-              "<tr>"
+      {
+        const OpTypeInfo* opInfo = parseOpType(node->data.value.op);
+        fprintf(dot,
+                "<tr>"
                   "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %s</td>"
-              "</tr>",
-              VALUE_FILL, parseOpType(node->data.value.op)->str);
+                "</tr>",
+                opInfo ? VALUE_FILL  : BAD_FILL, 
+                opInfo ? opInfo->str : "ERROR: no info for such OpType");
+      }
       break;
     case VAR_TYPE:
-      fprintf(dot,
-              "<tr>"
-                  "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %c</td>"
-              "</tr>",
-              VALUE_FILL, node->data.value.var);
+      {
+        Variable* v = getVar(vars, node->data.value.var);
+        fprintf(dot,
+                "<tr>"
+                  "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %s</td>"
+                "</tr>",
+                v ? VALUE_FILL : BAD_FILL, 
+                v ? v->str     : "ERROR: no var with such index");
+      }
       break;
     case NUM_TYPE:
       fprintf(dot,
               "<tr>"
-                  "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %lf</td>"
+                "<td colspan=\"6\" bgcolor=\"%s\"><b>value:</b> %lf</td>"
               "</tr>",
               VALUE_FILL, node->data.value.num);
       break;

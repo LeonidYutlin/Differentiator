@@ -71,4 +71,5 @@ Error dumpErrors(FILE* file) {
             err->shortDesc, 
             err->desc);
   }
+  return OK;
 }
