@@ -61,12 +61,4 @@ Error nodeOptimize(TreeNode** node);
 Error  nodeDelete(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
 Error nodeDestroy(TreeNode* node, bool isAlloced = false, size_t* nodeCount = NULL);
 
-//struct Variables; //a promise that variables will be properly included
-#include "../../diff/context.h"
-
-struct FindVarCBData {
-  const char* var;
-  Variables* vars;
-};
-
 #endif

@@ -27,7 +27,7 @@ int main() {
   fclose(expr);
   treeDump(log, ctx.vars, tree, "<b3>Read tree</b3>");
   treeToTex(&ctx, tree);
-  TreeNode* diffTreeX = differentiate(&ctx, tree->rootNode, "xander");
+  TreeNode* diffTreeX = differentiate(&ctx, tree->rootNode, "xanr");
   nodeDump(log, ctx.vars, diffTreeX, "<b3> tree after diff </b3>");
   nodeToTex(&ctx, diffTreeX);
   TreeNode* diffTreeY = differentiate(&ctx, tree->rootNode, "\\varepsilon");

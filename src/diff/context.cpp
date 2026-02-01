@@ -3,7 +3,8 @@
 #include "io.h"
 
 static Variable* findVarHashed(Variables* vars, const char* varStr, 
-                               ulong hash, Error* status = NULL);
+                               ulong hash, Error* status = NULL, 
+                               size_t* indexPtr = NULL);
 static ulong hash(const char* str);
 
 Error contextInit(Context* ctx, size_t initialCapacity) {
@@ -147,14 +148,15 @@ Error setVarValue(Variables* vars, const char* varStr, double value) {
   return OK;
 }
 
-Variable* findVar(Variables* vars, const char* varStr, Error* status) {
+Variable* findVar(Variables* vars, const char* varStr, 
+                  Error* status, size_t* indexPtr) {
   if (!vars || !varStr)
     RETURN_WITH_STATUS(InvalidParameters, NULL);
   Error err = varsVerify(vars);
   if (err)
     RETURN_WITH_STATUS(err, NULL);
 
-  return findVarHashed(vars, varStr, hash(varStr), status);
+  return findVarHashed(vars, varStr, hash(varStr), status, indexPtr);
 }
 
 bool ofVar(Variables* vars, TreeNode* node, const char* varStr) {
@@ -182,7 +184,7 @@ Error varsVerify(Variables* vars) {
 }
 
 static Variable* findVarHashed(Variables* vars, const char* varStr, 
-                               ulong hash, Error* status) {
+                               ulong hash, Error* status, size_t* indexPtr) {
   if (!vars || !varStr)
     RETURN_WITH_STATUS(InvalidParameters, NULL);
   Error err = varsVerify(vars);
@@ -193,10 +195,14 @@ static Variable* findVarHashed(Variables* vars, const char* varStr,
     Variable* vi = vars->items + i;
     if (!vi->str) continue;
     if (hash == vi->hash && 
-        strcmp(varStr, vi->str) == 0) return vi; 
+        strcmp(varStr, vi->str) == 0) {
+      if (indexPtr) 
+        *indexPtr = i;
+      return vi;
+    }
   }
 
-  return NULL;
+  RETURN_WITH_STATUS(UnknownVariable, NULL);
 }
 
 //NOTE: Source: http://www.cse.yorku.ca/~oz/hash.html

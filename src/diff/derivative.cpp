@@ -26,6 +26,11 @@
 static TreeNode* differentiateRec(Context* ctx, TreeNode* node, const char* var);
 static TreeNode* differentiatePower(Context* ctx, TreeNode* node, const char* var);
 
+#define DUMP_TO_TEX_AND_RETURN(returnNode)                                 \
+        return ctx->sink                                                   \
+               ? differentiationStepToTex(ctx, var, node, returnNode)      \
+               : returnNode;
+
 TreeNode* differentiate(Context* ctx, TreeNode* node, const char* var) {
   if (!node ||
       !var  ||
@@ -39,17 +44,16 @@ TreeNode* differentiate(Context* ctx, TreeNode* node, const char* var) {
     nodeToTex(ctx, node);
   }
 
+  //if the var is not found, that means that the entire expression will diff-te to 0
+  if (!findVar(ctx->vars, var))
+    DUMP_TO_TEX_AND_RETURN(D_CONST);
+
   if (varsVerify(ctx->vars))
     return NULL;
   TreeNode* diff = differentiateRec(ctx, node, var);
   nodeFixParents(diff);
   return diff;
 }
-
-#define DUMP_TO_TEX_AND_RETURN(returnNode)                                 \
-        return ctx->sink                                                   \
-               ? differentiationStepToTex(ctx, var, node, returnNode)      \
-               : returnNode;
 
 static TreeNode* differentiateRec(Context* ctx, TreeNode* node, const char* var) {
   assert(ctx && !varsVerify(ctx->vars));
@@ -97,20 +101,27 @@ static TreeNode* differentiateRec(Context* ctx, TreeNode* node, const char* var)
 #undef DUMP_TO_TEX_AND_RETURN
 
 static TreeNode* differentiatePower(Context* ctx, TreeNode* node, const char* var) {
-
   assert(ctx && !varsVerify(ctx->vars));
   if (!node ||
       !node->left ||
       !node->right)
     return NULL;
 
-  FindVarCBData data = {.var = var, .vars = ctx->vars};
-  bool leftContainsX = nodeTraverseInfix(node->left, findVariableCallback, (void*)&data);
-  bool rightContainsX = nodeTraverseInfix(node->right, findVariableCallback, (void*)&data);
-
+  Error err = OK;
+  size_t data = 0; //to store the index when successfully found
+  /*Variable* v = */ findVar(ctx->vars, var, &err, &data);
+  if (err) //UnknownVariable or other error
+    return D_CONST;
+  bool leftContainsX  = nodeTraverseInfix(node->left, 
+                                          findVariableCallback, 
+                                          (void*)&data);
+  bool rightContainsX = nodeTraverseInfix(node->right, 
+                                          findVariableCallback, 
+                                          (void*)&data);
+  
   if (!leftContainsX &&
       !rightContainsX)
-    return D_CONST;
+    return D_CONST; 
 
   if (leftContainsX &&
       !rightContainsX)

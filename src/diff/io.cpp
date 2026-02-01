@@ -9,7 +9,8 @@
 
 static Error nodeToTexTraverse(Context* ctx, TreeNode* node,
                                size_t* writtenCount,
-                               bool suppressBrackets = false, bool suppressNewline = false);
+                               bool suppressBrackets = false, 
+                               bool suppressNewline = false);
 static bool compareParentPriority(TreeNode* node);
 
 static TreeNode* getE(const char* buf, size_t* p);
@@ -17,7 +18,8 @@ static TreeNode* getT(const char* buf, size_t* p);
 static TreeNode* getP(const char* buf, size_t* p);
 static TreeNode* getN(const char* buf, size_t* p);
 
-static TreeNode* nodeReadRecursion(Variables* vars, char* buf, size_t bufSize, size_t* pos,
+static TreeNode* nodeReadRecursion(Variables* vars, 
+                                   char* buf, size_t bufSize, size_t* pos,
                                    Error* status, size_t* nodeCount);
 
 static const char* NULL_STRING_REPRESENTATION   = "nil";
@@ -61,17 +63,13 @@ TreeNode* differentiationStepToTex(Context* ctx, const char* var,
     RETURN_WITH_STATUS(err, NULL);
 
   nodeFixParents(after);
-
   ctx->stepCount++;
-  size_t nodeCount = 0;
-  nodeTraverseInfix(before, countNodesCallback, &nodeCount);
-  nodeTraverseInfix(after,  countNodesCallback, &nodeCount);
   fprintf(ctx->sink,
-          "\\raggedright(%u):\\begin{align*}\n\\frac{d}{d%s}",
+          "\\raggedright(%u):\\begin{align*}\n\\frac{d}{d%s}(",
           ctx->stepCount, var);
   size_t writtenCount = 0;
-  nodeToTexTraverse(ctx, before, &writtenCount);
-  fputs(" = ", ctx->sink);
+  nodeToTexTraverse(ctx, before, &writtenCount, true);
+  fputs(") = ", ctx->sink);
   // nodeToTexTraverse(after, ctx->sink, &writtenCount);
   // fputs(" = ", ctx->sink);
   nodeOptimize(&after);

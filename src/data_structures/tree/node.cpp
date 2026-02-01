@@ -112,7 +112,8 @@ void nodeFixParents(TreeNode* node) {
   }
 }
 
-Error nodeChangeChild(TreeNode* parent, TreeNode* child, TreeNode* newChild, size_t* nodeCount) {
+Error nodeChangeChild(TreeNode* parent, TreeNode* child, 
+                      TreeNode* newChild, size_t* nodeCount) {
   TreeNode** childPath = NULL;
   if (!parent) {
     if (newChild)
@@ -331,8 +332,9 @@ Error countNodesCallback(unused TreeNode* node,
 // here non-zero return is treated as found variable
 Error findVariableCallback(TreeNode* node, void* data, 
                            unused uint level) {
-  FindVarCBData* cbData = (FindVarCBData*)data;
-  if (OF_VAR(cbData->vars, node, cbData->var))
+  size_t* index = (size_t*)data;
+  if (IS_VAR(node) 
+      && node->data.value.var == *index)
     return 1;
   return OK;
 }

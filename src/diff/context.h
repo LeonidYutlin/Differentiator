@@ -25,7 +25,8 @@ Variables* varsAlloc(size_t initialCapacity, Error* status = NULL);
 Error varsDestroy(struct Variables* vars); 
 size_t regVar(Variables* vars, const char* varStr, Error* status = NULL); 
 Variable* getVar(Variables* vars, size_t index, Error* status = NULL);
-Variable* findVar(Variables* vars, const char* varStr, Error* status = NULL);
+Variable* findVar(Variables* vars, const char* varStr, 
+                  Error* status = NULL, size_t* indexPtr = NULL);
 //NOTE: any error (e.g. NULL vars) and this will return false
 bool ofVar(Variables* vars, TreeNode* node, const char* varStr);
 Error setVarValue(Variables* vars, const char* varStr, double value);
