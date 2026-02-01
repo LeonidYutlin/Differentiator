@@ -18,15 +18,27 @@ TreeNode* parseFormula(const char* expression);
 TreeNode* nodeRead(FILE* file, Variables* vars, Error* status = NULL, size_t* nodeCount = NULL);
 TreeRoot* treeRead(FILE* file, Variables* vars, Error* status = NULL);
 
-Error nodePrintPrefix (FILE* file, Variables* vars, TreeNode* node);
-Error nodePrintInfix  (FILE* file, Variables* vars, TreeNode* node);
-Error nodePrintPostfix(FILE* file, Variables* vars, TreeNode* node);
-
-Error treePrintPrefix (FILE* file, Variables* vars, TreeRoot* root);
-Error treePrintInfix  (FILE* file, Variables* vars, TreeRoot* root);
-Error treePrintPostfix(FILE* file, Variables* vars, TreeRoot* root);
-
 Error openTexFile(Context* context);
 Error closeTexFile(Context* context);
+
+//Extension of NodePutcCallbackData that includes vars field
+//which is needed for nodePrint
+//This struct is a perfect suit for all 3 callbacks below
+struct NodePrintCallbackData {
+  FILE* sink = NULL;
+  char c = 0; 
+  Variables* vars = NULL; 
+};
+
+struct NodePutcCallbackData {
+  FILE* sink = NULL;
+  char c = 0; 
+};
+
+Error nodePutcCallback(TreeNode* node, void* data, uint level);
+Error nodePrintCallback(TreeNode* node, void* data, uint level);
+Error nodePutcAndPrintCallback(TreeNode* node, void* data, uint level);
+
+Error nodePrint(FILE* f, Variables* vars, TreeNode* node); 
 
 #endif

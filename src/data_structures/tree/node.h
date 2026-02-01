@@ -33,19 +33,26 @@ TreeNode* nodeAlloc(NodeUnit data, TreeNode* parent = NULL,
                     TreeNode* left = NULL, TreeNode* right = NULL,
                     Error* status = NULL);
 
-/// Universal infix traverse - stops if callbackFunction returns true
 typedef Error (*callback_f)(TreeNode* node, void* data, uint level);
 
-Error nodeTraverseInfix(TreeNode* node,
-                        callback_f callbackFunction,
-                        void* data = NULL, uint level = 0);
-Error nodeTraversePrefix(TreeNode* node,
-                         callback_f callbackFunction,
-                         void* data = NULL, uint level = 0);
+struct NodeTraverseOpt {
+  callback_f prefix  = NULL;
+  callback_f infix   = NULL;
+  callback_f postfix = NULL;
+  void* prefixData   = NULL;
+  void* infixData    = NULL;
+  void* postfixData  = NULL;
+  uint level = 0;
+};
+
+/// Universal Traverse - stops if any callback_f return non-zero
+Error nodeTraverse(TreeNode* node, NodeTraverseOpt opt);
+
+#define nodeTraverse(node, ...) \
+  nodeTraverse(node, (NodeTraverseOpt){ __VA_ARGS__ })
 
 Error countNodesCallback(TreeNode* node, void* data, uint level);
 Error findVariableCallback(TreeNode* node, void* data, uint level);
-// copy-paste postfix traverses...
 
 //Takes parent, seaches for child as its child, replaces that child with newChild and frees child
 //Note: if your newChild and child are in a relationship then you should make sure they aren't by

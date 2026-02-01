@@ -23,6 +23,10 @@
     GenericError,                                                                  \
     "Failed to open file",                                                         \
     "Failed to open file. See perror() for more info")                             \
+  X(EndOfFile,                                                                     \
+    GenericError,                                                                  \
+    "Std func returned EOF",                                                       \
+    "Std func returned EOF. See perror() for more info")                           \
   X(NullPointerField,                                                              \
     GenericError,                                                                  \
     "There is a NULL field present in struct",                                     \

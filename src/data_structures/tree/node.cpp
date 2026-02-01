@@ -5,6 +5,8 @@
 #include <string.h>
 #include <assert.h>
 
+#undef nodeTraverse
+
 static double nodeOptimizeConstants(TreeNode* node, size_t* nodeCount, Error* status = NULL);
 static Error nodeOptimizeNeutral(TreeNode** node, size_t* nodeCount);
 
@@ -51,26 +53,16 @@ TreeNode*  nodeAlloc(NodeUnit data, TreeNode* parent,
   return node;
 }
 
-Error nodeTraverseInfix(TreeNode* node,
-                        int cb(TreeNode* node, void* data, uint level),
-                        void* data, uint level) {
+Error nodeTraverse(TreeNode* node, NodeTraverseOpt opt) {
 	if (!node)
     return OK;
 
-	return nodeTraverseInfix(node->left, cb, data, level + 1) ||
-         cb(node, data, level) ||
-         nodeTraverseInfix(node->right, cb, data, level + 1);
-}
-
-Error nodeTraversePrefix(TreeNode* node,
-                         int cb(TreeNode* node, void* data, uint level),
-                         void* data, uint level) {
-	if (!node)
-      return OK;
-
-	return cb(node, data, level) ||
-         nodeTraversePrefix(node->left, cb, data, level + 1) ||
-         nodeTraversePrefix(node->right, cb, data, level + 1);
+  opt.level++;
+  return (opt.prefix  && opt.prefix(node,  opt.prefixData, opt.level - 1)) ||
+         nodeTraverse(node->left,  opt) ||
+         (opt.infix   && opt.infix(node,   opt.infixData, opt.level - 1)) ||
+         nodeTraverse(node->right, opt) ||
+         (opt.postfix && opt.postfix(node, opt.postfixData, opt.level - 1));
 }
 
 TreeNode* nodeCopy(TreeNode* src, TreeNode* newParent, Error* status) {
@@ -324,6 +316,8 @@ Error nodeDestroy(TreeNode* node, bool isAlloced, size_t* nodeCount) {
 Error countNodesCallback(unused TreeNode* node, 
                          void* data, 
                          unused uint level) {
+  if (!data)
+    return InvalidParameters;
   size_t* nodeCount = (size_t*)data;
   (*nodeCount)++;
   return OK;
@@ -332,6 +326,9 @@ Error countNodesCallback(unused TreeNode* node,
 // here non-zero return is treated as found variable
 Error findVariableCallback(TreeNode* node, void* data, 
                            unused uint level) {
+  if (data)
+    return OK; //nothing to find
+
   size_t* index = (size_t*)data;
   if (IS_VAR(node) 
       && node->data.value.var == *index)

@@ -538,7 +538,36 @@ static TreeNode* nodeReadRecursion(Variables* vars,
 #undef SKIP_WHITESPACE
 #undef RETURN_WITH_STATUS
 
-Error nodePrintPrefix(FILE* f, Variables* vars, TreeNode* node) {
+Error nodePutcCallback(unused TreeNode* node, 
+                       void* data,
+                       unused uint level) {
+  if (!data)
+    return InvalidParameters;
+
+  NodePutcCallbackData* d = (NodePutcCallbackData*)data;
+  if (!d->sink)
+    return InvalidParameters;
+  return (fputc(d->c, d->sink) == EOF)
+         ? EndOfFile
+         : OK;
+}
+
+Error nodePrintCallback(TreeNode* node, void* data, 
+                        unused uint level) {
+  if (!data)
+    return InvalidParameters;
+
+  NodePrintCallbackData* d = (NodePrintCallbackData*)data;
+  return nodePrint(d->sink, d->vars, node);
+}
+
+Error nodePutcAndPrintCallback(TreeNode* node, void* data, 
+                              unused uint level) {
+  return nodePutcCallback(node, data, level) ||
+         nodePrintCallback(node, data, level);
+}
+
+Error nodePrint(FILE* f, Variables* vars, TreeNode* node) {
   if (!node ||
       !f ||
       !vars)
@@ -547,7 +576,6 @@ Error nodePrintPrefix(FILE* f, Variables* vars, TreeNode* node) {
   if ((err = varsVerify(vars)))
     return err;
 
-  fputc('(', f);
   switch (node->data.type) {
     case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
     case VAR_TYPE: 
@@ -564,86 +592,7 @@ Error nodePrintPrefix(FILE* f, Variables* vars, TreeNode* node) {
     break;
     default: break;
   }
-  nodePrintPrefix(f, vars, node->left);
-  nodePrintPrefix(f, vars, node->right);
-  fputc(')', f);
   return OK;
-}
-
-Error nodePrintInfix(FILE* f, Variables* vars, TreeNode* node) {
-  if (!node ||
-      !f ||
-      !vars)
-    return InvalidParameters;
-  Error err = OK;
-  if ((err = varsVerify(vars)))
-    return err;
-
-  fputc('(', f);
-  nodePrintInfix(f, vars, node->left);
-  switch (node->data.type) {
-    case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
-    case VAR_TYPE: 
-    {
-      Variable* v = getVar(vars, node->data.value.var);
-      fprintf(f, "%s", v ? v->str : "ERROR: Invalid index inside VAR node"); 
-    }
-    break;
-    case OP_TYPE : 
-    {
-      const OpTypeInfo* i = parseOpType(node->data.value.op);
-      fprintf(f, "%s", i ? i->str : "ERROR: Unknown Op Type"); 
-    }
-    break;
-    default: break;
-  }
-  nodePrintInfix(f, vars, node->right);
-  fputc(')', f);
-  return OK;
-}
-
-Error nodePrintPostfix(FILE* f, Variables* vars, TreeNode* node) { ///// ?
-  if (!node ||
-      !f ||
-      !vars)
-    return InvalidParameters;
-  Error err = OK;
-  if ((err = varsVerify(vars)))
-    return err;
-
-  fputc('(', f);
-  nodePrintPostfix(f, vars, node->left);
-  nodePrintPostfix(f, vars, node->right);
-  switch (node->data.type) {
-    case NUM_TYPE: fprintf(f, "%lf", node->data.value.num); break;
-    case VAR_TYPE: 
-    {
-      Variable* v = getVar(vars, node->data.value.var);
-      fprintf(f, "%s", v ? v->str : "ERROR: Invalid index inside VAR node"); 
-    }
-    break;
-    case OP_TYPE : 
-    {
-      const OpTypeInfo* i = parseOpType(node->data.value.op);
-      fprintf(f, "%s", i ? i->str : "ERROR: Unknown Op Type"); 
-    }
-    break;
-    default: break;
-  }
-  fputc(')', f);
-  return OK;
-}
-
-Error treePrintPrefix(FILE* f, Variables* vars, TreeRoot* root) {
-  return nodePrintPrefix(f, vars, root->rootNode);
-}
-
-Error treePrintInfix(FILE* f, Variables* vars, TreeRoot* root) {
-  return nodePrintInfix(f, vars, root->rootNode);
-}
-
-Error treePrintPostfix(FILE* f, Variables* vars, TreeRoot* root) {
-  return nodePrintPostfix(f, vars, root->rootNode);
 }
 
 ///Returns true if parent has higher priority than the node

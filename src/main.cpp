@@ -34,6 +34,34 @@ int main() {
   nodeDump(log, ctx.vars, diffTreeY, "<b3> tree after diff </b3>");
   nodeToTex(&ctx, diffTreeY);
 
+  //Examples of using callbacks! Yay
+  NodePrintCallbackData prefixData = {
+    .sink = stderr, 
+    .c = '<'
+  };
+  NodePrintCallbackData infixData = {
+    .sink = stderr, 
+    .vars = ctx.vars
+  };
+  NodePrintCallbackData postfixData = {
+    .sink = stderr, 
+    .c = '>'
+  };
+  nodeTraverse(diffTreeY, 
+               .prefix  = nodePutcCallback,
+               .infix   = nodePrintCallback,
+               .postfix = nodePutcCallback,
+               .prefixData  = &prefixData,
+               .infixData   = &infixData,
+               .postfixData = &postfixData);
+  fprintf(stderr, "\n\n\n");
+  prefixData.vars = ctx.vars;
+  nodeTraverse(diffTreeY, 
+               .prefix  = nodePutcAndPrintCallback,
+               .postfix = nodePutcCallback,
+               .prefixData  = &prefixData,
+               .postfixData = &postfixData);
+
   treeDestroy(tree, true);
   nodeDestroy(diffTreeX, true);
   contextDestroy(&ctx);

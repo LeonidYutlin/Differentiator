@@ -15,7 +15,7 @@ TreeRoot* attachRoot(TreeNode* node, Error* status) {
 
   root->status = OK;
   root->rootNode = node;
-  nodeTraverseInfix(node, countNodesCallback, &root->nodeCount);
+  nodeTraverse(node, .infix = countNodesCallback, .infixData = &root->nodeCount);
   return root;
 }
 
@@ -60,12 +60,6 @@ TreeRoot* treeAlloc(NodeUnit data,
     RETURN_WITH_STATUS(returnedStatus, NULL);
 
   return root; //return treeVerify(root);
-}
-
-Error treeTraverseInfix(TreeRoot* root,
-                        int cb(TreeNode* node, void* data, uint level),
-                        void* data, uint level) {
-	return nodeTraverseInfix(root->rootNode, cb, data, level);
 }
 
 Error treeDestroy(TreeRoot* root, bool isAlloced) {

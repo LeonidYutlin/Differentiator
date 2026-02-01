@@ -112,12 +112,12 @@ static TreeNode* differentiatePower(Context* ctx, TreeNode* node, const char* va
   /*Variable* v = */ findVar(ctx->vars, var, &err, &data);
   if (err) //UnknownVariable or other error
     return D_CONST;
-  bool leftContainsX  = nodeTraverseInfix(node->left, 
-                                          findVariableCallback, 
-                                          (void*)&data);
-  bool rightContainsX = nodeTraverseInfix(node->right, 
-                                          findVariableCallback, 
-                                          (void*)&data);
+  bool leftContainsX  = nodeTraverse(node->left, 
+                                     .infix = findVariableCallback, 
+                                     .infixData = (void*)&data);
+  bool rightContainsX = nodeTraverse(node->right, 
+                                     .infix = findVariableCallback, 
+                                     .infixData = (void*)&data);
   
   if (!leftContainsX &&
       !rightContainsX)

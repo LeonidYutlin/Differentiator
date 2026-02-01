@@ -20,9 +20,8 @@ TreeRoot* treeAlloc(NodeUnit data,
                     TreeNode* left = NULL, TreeNode* right = NULL,
                     Error* status = NULL);
 
-Error treeTraverseInfix(TreeRoot* root,
-                        callback_f callbackFunction,
-                        void* data = NULL, uint level = 0);
+#define treeTraverse(root, ...) \
+  nodeTraverse((root)->rootNode, (NodeTraverseOpt){ __VA_ARGS__ })
 
 Error treeDestroy(TreeRoot* tree, bool isAlloced = false);
 
