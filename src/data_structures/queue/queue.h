@@ -1,8 +1,8 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include "../../error/error.h"
-#include "../tree/node.h"
+#include "error/error.h"
+#include "data_structures/tree/node.h"
 
 typedef TreeNode* QueueUnit;
 

@@ -1,5 +1,5 @@
-#include "tree.h"
-#include "../../misc/util.h"
+#include "data_structures/tree/tree.h"
+#include "misc/util.h"
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>

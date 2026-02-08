@@ -3,9 +3,9 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include "modules/generic.h"
-#include "modules/tree.h"
-#include "modules/variables.h"
+#include "error/modules/generic.h"
+#include "error/modules/tree.h"
+#include "error/modules/variables.h"
 
 typedef int Error;
 

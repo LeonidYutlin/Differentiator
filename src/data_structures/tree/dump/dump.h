@@ -2,8 +2,8 @@
 #define DUMP_H
 
 #include <stdio.h>
-#include "../tree.h"
-#include "../../../diff/context.h"
+#include "data_structures/tree/tree.h"
+#include "diff/context.h"
 
 void treeDump(FILE* html, Variables* vars, TreeRoot* root,
               const char* commentary, const char* filename, int line);

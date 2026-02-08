@@ -1,4 +1,4 @@
-#include "tree.h"
+#include "data_structures/tree/tree.h"
 #include <stdlib.h>
 
 #define RETURN_WITH_STATUS(value, returnValue) \

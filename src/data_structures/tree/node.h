@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <sys/types.h>
-#include "nodetype.h"
-#include "../../error/error.h"
+#include "data_structures/tree/nodetype.h"
+#include "error/error.h"
 
 union NodeValue {
   OpType op;

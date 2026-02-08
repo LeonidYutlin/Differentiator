@@ -2,8 +2,8 @@
 #define IO_H
 
 #include <stdio.h>
-#include "context.h"
-#include "../data_structures/tree/tree.h"
+#include "diff/context.h"
+#include "data_structures/tree/tree.h"
 
 Error nodeToTex(Context* context, TreeNode* node);
 Error treeToTex(Context* context, TreeRoot* root);

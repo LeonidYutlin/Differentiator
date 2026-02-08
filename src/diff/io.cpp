@@ -1,7 +1,7 @@
-#include "../data_structures/tree/tree.h"
-#include "io.h"
-#include "../misc/util.h"
-#include "../misc/quotes.h"
+#include "data_structures/tree/tree.h"
+#include "diff/io.h"
+#include "misc/util.h"
+#include "misc/quotes.h"
 #include <cctype>
 #include <time.h>
 #include <assert.h>
@@ -19,7 +19,7 @@ static TreeNode* getP(const char* buf, size_t* p);
 static TreeNode* getN(const char* buf, size_t* p);
 
 static TreeNode* nodeReadRecursion(Variables* vars, 
-                                   char* buf, size_t bufSize, size_t* pos,
+                                   char* buf, size_t bufSize, size_t* p,
                                    Error* status, size_t* nodeCount);
 
 static const char* NULL_STRING_REPRESENTATION   = "nil";
@@ -267,26 +267,32 @@ static Error nodeToTexTraverse(Context* ctx, TreeNode* node, size_t* writtenCoun
 
 #undef ADD_TO_COUNT
 
-#define SYNTAX_ERROR(commentary, expectedCharStr, pos)              \
+#define SYNTAX_ERROR(commentary, expectedCharStr, p)              \
   {                                                                 \
   fprintf(stderr,                                                   \
           "[ERROR]: Failed to read given mathematical expression\n" \
-          "\tAt position %lu\n"                                     \
+          "\tAt pition %lu\n"                                     \
           "\t%s\n"                                                  \
           "\tExpected char: %s\n"                                   \
           "\tString snippet:\n"                                     \
           "\t%.10s...\n"                                            \
           "\t^\n",                                                  \
-          pos,                                                      \
+          p,                                                      \
           commentary,                                               \
           expectedCharStr,                                          \
-          buf + pos);                                               \
+          buf + p);                                               \
   return NULL;                                                      \
+  }
+
+#define SKIP_WHITESPACE        \
+  while (isspace(buf[*p])) { \
+      (*p)++;                \
   }
 
 TreeNode* parseFormula(const char* buf) {
   size_t p = 0;
   TreeNode* val = getE(buf, &p);
+  while (isspace(buf[p])) p++;
   if (buf[p] != '\0')
     SYNTAX_ERROR("Illegal character at the end of given expression", "NULL character ('\\0')", p);
   p++;
@@ -294,6 +300,7 @@ TreeNode* parseFormula(const char* buf) {
 }
 
 static TreeNode* getE(const char* buf, size_t* p) {
+  SKIP_WHITESPACE
   TreeNode* val = getT(buf, p);
   while (buf[*p] == '+' ||
          buf[*p] == '-') {
@@ -305,10 +312,12 @@ static TreeNode* getE(const char* buf, size_t* p) {
     else
       val = SUB_(val, val2);
   }
+  SKIP_WHITESPACE
   return val;
 }
 
 static TreeNode* getT(const char* buf, size_t* p) {
+  SKIP_WHITESPACE
   TreeNode* val = getP(buf, p);
   while (buf[*p] == '*' ||
          buf[*p] == '/') {
@@ -320,24 +329,30 @@ static TreeNode* getT(const char* buf, size_t* p) {
     else
       val = DIV_(val, val2);
   }
+  SKIP_WHITESPACE
   return val;
 }
 
 static TreeNode* getP(const char* buf, size_t* p) {
+  SKIP_WHITESPACE
   while (buf[*p] == '(') {
     (*p)++;
+    SKIP_WHITESPACE
     TreeNode* val = getE(buf, p);
+    SKIP_WHITESPACE
     if (buf[*p] == ')')
       (*p)++;
     else
       SYNTAX_ERROR("Illegal character at the end of a primary expression", ")", *p);
     return val;
   }
+  SKIP_WHITESPACE
   return getN(buf, p);
 }
 
 
 static TreeNode* getN(const char* buf, size_t* p) {
+  SKIP_WHITESPACE
   double val = 0;
   size_t oldP = *p;
   while (buf[*p] >= '0' &&
@@ -347,7 +362,7 @@ static TreeNode* getN(const char* buf, size_t* p) {
   }
   if (oldP == *p)
     SYNTAX_ERROR("Illegal char at the start of a number", "[0-9]", *p);
-
+  SKIP_WHITESPACE
   return NUM_(val);
 }
 
@@ -366,8 +381,8 @@ TreeNode* nodeRead(FILE* f, Variables* vars, Error* status, size_t* nodeCount) {
   if ((err = readBufferFromFile(f, &buffer, &bufferSize)))
     RETURN_WITH_STATUS(err, NULL);
 
-  size_t pos = 0;
-  TreeNode* node = nodeReadRecursion(vars, buffer, bufferSize, &pos, &err, nodeCount);
+  size_t p = 0;
+  TreeNode* node = nodeReadRecursion(vars, buffer, bufferSize, &p, &err, nodeCount);
   free(buffer);
   if (err)
     RETURN_WITH_STATUS(err, NULL);
@@ -401,26 +416,21 @@ TreeRoot* treeRead(FILE* f, Variables* vars, Error* status) {
 #define DUMP_ERROR_RETURN(commentary)                      \
   {                                                        \
   fprintf(stderr,                                          \
-          "[ERROR]: Failed to read node at position %lu\n" \
+          "[ERROR]: Failed to read node at pition %lu\n" \
           "Comment: %s\n"                                  \
           "\tLine snippet:\n"                              \
           "\t->%.10s...\n",                                \
-          *pos,                                            \
+          *p,                                            \
           commentary,                                      \
-          buf + *pos);                                     \
+          buf + *p);                                     \
   RETURN_WITH_STATUS(FailReadNode, NULL);                  \
   }
 
-#define SKIP_WHITESPACE        \
-  while (isspace(buf[*pos])) { \
-      (*pos)++;                \
-  }
-
 static TreeNode* nodeReadRecursion(Variables* vars,
-                                   char* buf, size_t bufSize, size_t* pos,
+                                   char* buf, size_t bufSize, size_t* p,
                                    Error* status, size_t* nodeCount) {
   if (!buf || 
-      *pos >= bufSize || 
+      *p >= bufSize || 
       !vars)
     RETURN_WITH_STATUS(InvalidParameters, NULL);
   Error err = OK;
@@ -428,28 +438,28 @@ static TreeNode* nodeReadRecursion(Variables* vars,
     RETURN_WITH_STATUS(err, NULL);
 
   // fprintf(stderr,
-  //             "[INFO]: at position %lu\n"
+  //             "[INFO]: at pition %lu\n"
   //             "\tLine snippet:\n"
   //             "\t->%.10s...\n",
-  //             *pos,
-  //             buf + *pos);
+  //             *p,
+  //             buf + *p);
   SKIP_WHITESPACE;
-  if (buf[*pos] == '(') {
-    (*pos)++;
+  if (buf[*p] == '(') {
+    (*p)++;
     SKIP_WHITESPACE;
     NodeUnit data = {};
     int charReadN = 0;
-    if (isdigit(buf[*pos]) ||
-        (buf[*pos] == '-' && isdigit(buf[*pos + 1]))) {
-      if (sscanf(buf + *pos,
+    if (isdigit(buf[*p]) ||
+        (buf[*p] == '-' && isdigit(buf[*p + 1]))) {
+      if (sscanf(buf + *p,
                  "%lg%n",
                  &data.value.num, &charReadN) != 1)
         DUMP_ERROR_RETURN("No valid value in node");
       data.type = NUM_TYPE;
-      *pos += (size_t)charReadN;
+      *p += (size_t)charReadN;
     } else {
       char valStr[MAX_VALUE_STRING_LENGTH] = {0};
-      if (sscanf(buf + *pos, "%s%n", 
+      if (sscanf(buf + *p, "%s%n", 
                  valStr, &charReadN) != 1)
         DUMP_ERROR_RETURN("No valid var/op value in node");
       if (valStr[MAX_VALUE_STRING_LENGTH - 1] != '\0')
@@ -459,7 +469,7 @@ static TreeNode* nodeReadRecursion(Variables* vars,
       if (opType >= 0) {
         data.value.op = (OpType)opType;
         data.type = OP_TYPE;
-        *pos += (size_t)charReadN;
+        *p += (size_t)charReadN;
       } else {
         size_t index = regVar(vars, valStr, &err);
         if (err != OK &&
@@ -467,7 +477,7 @@ static TreeNode* nodeReadRecursion(Variables* vars,
           RETURN_WITH_STATUS(err, NULL);
         data.value.var = index;
         data.type = VAR_TYPE;
-        *pos += (size_t)charReadN;
+        *p += (size_t)charReadN;
       }
     }
     if (data.type == UNKNOWN_TYPE)
@@ -477,12 +487,12 @@ static TreeNode* nodeReadRecursion(Variables* vars,
                           ? parseOpType(data.value.op)->argCount
                           : 0;
 
-    TreeNode* left  = nodeReadRecursion(vars, buf, bufSize, pos, status, nodeCount);
+    TreeNode* left  = nodeReadRecursion(vars, buf, bufSize, p, status, nodeCount);
     if (*status) {
       nodeDestroy(left, true);
       return NULL;
     }
-    TreeNode* right = nodeReadRecursion(vars, buf, bufSize, pos, status, nodeCount);
+    TreeNode* right = nodeReadRecursion(vars, buf, bufSize, p, status, nodeCount);
     if (*status) {
       //Я знаю что тут всегда ноды и так нулевой указатель
       //однако на будущие случаи лучше иметь деструктор чем не иметь
@@ -498,10 +508,10 @@ static TreeNode* nodeReadRecursion(Variables* vars,
       DUMP_ERROR_RETURN("Node has too few or too many null children!");
     }
 
-    //fprintf(stderr, "Pos is %lu BufSize is %lu\n", *pos, bufSize);
+    //fprintf(stderr, "Pos is %lu BufSize is %lu\n", *p, bufSize);
     SKIP_WHITESPACE;
-    if (buf[*pos] == ')') {
-      (*pos)++;
+    if (buf[*p] == ')') {
+      (*p)++;
     } else {
       nodeDestroy(left, true);
       nodeDestroy(right, true);
@@ -524,10 +534,10 @@ static TreeNode* nodeReadRecursion(Variables* vars,
     if (nodeCount)
       (*nodeCount)++;
     return node;
-  } else if (strncmp(buf + *pos,
+  } else if (strncmp(buf + *p,
                      NULL_STRING_REPRESENTATION,
                      NULL_STRING_REPRESENTATION_LENGTH) == 0) {
-    *pos += NULL_STRING_REPRESENTATION_LENGTH;
+    *p += NULL_STRING_REPRESENTATION_LENGTH;
     return NULL;
   }
 
