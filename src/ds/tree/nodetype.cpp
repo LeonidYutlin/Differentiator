@@ -1,4 +1,4 @@
-#include "data_structures/tree/nodetype.h"
+#include "ds/tree/nodetype.h"
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>

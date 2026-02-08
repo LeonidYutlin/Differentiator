@@ -1,4 +1,4 @@
-#include "data_structures/tree/tree.h"
+#include "ds/tree/tree.h"
 #include "diff/io.h"
 #include "misc/util.h"
 #include "misc/quotes.h"

@@ -19,7 +19,7 @@ struct Variables {
   size_t count = 0;
 };
 
-#include "../data_structures/tree/node.h"
+#include "ds/tree/node.h"
 
 Variables* varsAlloc(size_t initialCapacity, Error* status = NULL);
 Error varsDestroy(struct Variables* vars); 

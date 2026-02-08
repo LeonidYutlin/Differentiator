@@ -2,7 +2,7 @@
 #define QUEUE_H
 
 #include "error/error.h"
-#include "data_structures/tree/node.h"
+#include "ds/tree/node.h"
 
 typedef TreeNode* QueueUnit;
 

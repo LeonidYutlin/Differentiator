@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <sys/types.h>
-#include "data_structures/tree/nodetype.h"
+#include "ds/tree/nodetype.h"
 #include "error/error.h"
 
 union NodeValue {

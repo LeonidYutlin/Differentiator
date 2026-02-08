@@ -1,5 +1,5 @@
-#include "data_structures/tree/dump/dump.h"
-#include "data_structures/tree/tree.h"
+#include "ds/tree/dump/dump.h"
+#include "ds/tree/tree.h"
 #undef treeDump
 #undef nodeDump
 
@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include "misc/quotes.h"
 #include "misc/util.h"
-#include "data_structures/queue/queue.h"
+#include "ds/queue/queue.h"
 
 static const size_t MAX_IMAGE_FILE_PATH_LENGTH = 128;
 static const size_t MAX_DOT_COMMAND_LENGTH = 512;

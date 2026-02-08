@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "data_structures/tree/node.h"
+#include "ds/tree/node.h"
 
 struct TreeRoot {
   Error status = UninitializedTree;
