@@ -5,5 +5,5 @@
 *.png
 *.svg
 *.txt
-build/*
-!build/*.*
+bin/*
+!bin/*.*
