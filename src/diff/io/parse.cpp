@@ -2,10 +2,13 @@
 #include "parse.h"
 #include <ctype.h>
 
-static TreeNode* getE(const char* buf, size_t* p);
-static TreeNode* getT(const char* buf, size_t* p);
-static TreeNode* getP(const char* buf, size_t* p);
-static TreeNode* getN(const char* buf, size_t* p);
+static TreeNode* getE(const char* buf, size_t* p, Variables* vars);
+static TreeNode* getT(const char* buf, size_t* p, Variables* vars);
+static TreeNode* getP(const char* buf, size_t* p, Variables* vars);
+static TreeNode* getN(const char* buf, size_t* p, Variables* vars);
+static TreeNode* getV(const char* buf, size_t* p, Variables* vars);
+
+static bool isvar(const char c);
 
 #define SYNTAX_ERROR(commentary, expectedCharStr, p)                \
   {                                                                 \
@@ -26,13 +29,16 @@ static TreeNode* getN(const char* buf, size_t* p);
 
 #define SKIP_WHITESPACE(a)    \
   while (isspace(buf[(a)])) { \
-      fprintf(stderr, "Remaining string \"%s\"\n", buf + (a)); \
       (a)++;                  \
   }
 
-TreeNode* parseFormula(const char* buf) {
+TreeNode* parseFormula(const char* buf, Variables* vars) {
+  if (!buf ||
+      !vars)
+    return NULL;
+
   size_t p = 0;
-  TreeNode* val = getE(buf, &p);
+  TreeNode* val = getE(buf, &p, vars);
   SKIP_WHITESPACE(p);
   if (buf[p] != '\0')
     SYNTAX_ERROR("Illegal character at the end of given expression", "NULL character ('\\0')", p);
@@ -41,14 +47,14 @@ TreeNode* parseFormula(const char* buf) {
   return val;
 }
 
-static TreeNode* getE(const char* buf, size_t* p) {
+static TreeNode* getE(const char* buf, size_t* p, Variables* vars) {
   SKIP_WHITESPACE(*p);
-  TreeNode* val = getT(buf, p);
+  TreeNode* val = getT(buf, p, vars);
   while (buf[*p] == '+' ||
          buf[*p] == '-') {
     char op = buf[*p];
     (*p)++;
-    TreeNode* val2 = getT(buf, p);
+    TreeNode* val2 = getT(buf, p, vars);
     if (op == '+')
       val = ADD_(val, val2);
     else
@@ -58,14 +64,14 @@ static TreeNode* getE(const char* buf, size_t* p) {
   return val;
 }
 
-static TreeNode* getT(const char* buf, size_t* p) {
+static TreeNode* getT(const char* buf, size_t* p, Variables* vars) {
   SKIP_WHITESPACE(*p);
-  TreeNode* val = getP(buf, p);
+  TreeNode* val = getP(buf, p, vars);
   while (buf[*p] == '*' ||
          buf[*p] == '/') {
     char op = buf[*p];
     (*p)++;
-    TreeNode* val2 = getP(buf, p);
+    TreeNode* val2 = getP(buf, p, vars);
     if (op == '*')
       val = MUL_(val, val2);
     else
@@ -75,12 +81,12 @@ static TreeNode* getT(const char* buf, size_t* p) {
   return val;
 }
 
-static TreeNode* getP(const char* buf, size_t* p) {
+static TreeNode* getP(const char* buf, size_t* p, Variables* vars) {
   SKIP_WHITESPACE(*p);
   while (buf[*p] == '(') {
     (*p)++;
     SKIP_WHITESPACE(*p);
-    TreeNode* val = getE(buf, p);
+    TreeNode* val = getE(buf, p, vars);
     SKIP_WHITESPACE(*p);
     if (buf[*p] == ')')
       (*p)++;
@@ -89,27 +95,66 @@ static TreeNode* getP(const char* buf, size_t* p) {
     return val;
   }
   SKIP_WHITESPACE(*p);
-  return getN(buf, p);
+  TreeNode* res = getV(buf, p, vars); 
+  return res 
+         ? res 
+         : getN(buf, p, vars);
 }
 
-static TreeNode* getN(const char* buf, size_t* p) {
+static TreeNode* getN(const char* buf, size_t* p, unused Variables* vars) {
   SKIP_WHITESPACE(*p);
+  bool neg = false;
   double val = 0;
   size_t oldP = *p;
-  while (buf[*p] >= '0' &&
-         buf[*p] <= '9') {
+  if (buf[*p] == '-') {
+    neg = true;
+    (*p)++;
+  }     
+  while (isdigit(buf[*p])) {
       val = val * 10 + (buf[*p] - '0');
-      fprintf(stderr, "I have found %c at %zu\n", buf[*p], *p);
       (*p)++;
   }
+  if (neg) 
+    val *= -1.0f;
   if (oldP == *p)
-    SYNTAX_ERROR("Illegal char at the start of a number", "[0-9]", *p);
-  fprintf(stderr, "I am at '%c', at %zu\n", buf[*p], *p);
+    SYNTAX_ERROR("Illegal char at the start of a number", "[0-9, -]", *p);
   SKIP_WHITESPACE(*p);
-  fprintf(stderr, "Done\n");
   return NUM_(val);
+}
+
+static TreeNode* getV(const char* buf, size_t* p, Variables* vars) {
+  SKIP_WHITESPACE(*p);
+  size_t oldP = *p;
+  char varName[MAX_VALUE_STRING_LENGTH] = {0};
+  for (size_t i = 0;
+       ((oldP == *p && 
+        !isdigit(buf[*p])) ||
+        oldP != *p)    &&
+        isvar(buf[*p]) &&
+        i < MAX_VALUE_STRING_LENGTH;
+       i++) {
+    varName[i] = buf[*p];
+    (*p)++;
+  }
+  if (oldP == *p)
+    return NULL;
+  varName[MAX_VALUE_STRING_LENGTH - 1] = '\0'; //ensure it is NULL-terminated
+  Error err = OK;
+  size_t index = regVar(vars, varName, &err);
+  if (err != OK &&
+      err != AttemptedReregistration) {
+    prettyError(stderr, err);
+    return NULL;
+  }
+  SKIP_WHITESPACE(*p);
+  return VAR_(index);
+}
+
+static bool isvar(const char c) {
+  return isalnum(c) ||
+         c == '\\'  ||
+         c == '_';
 }
 
 #undef SYNTAX_ERROR
 #undef SKIP_WHITESPACE
-

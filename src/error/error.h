@@ -58,6 +58,9 @@ struct ErrorInfo {
 const ErrorModuleInfo* parseErrorModule(ErrorModule module);
 const ErrorInfo* parseError(Error error);
 
+void prettyError(FILE* sink, Error error, const char* filaname, int line);
+#define prettyError(sink, error) prettyError(sink, error, __FILE__, __LINE__)
+
 Error dumpErrors(FILE* file);
 
 #endif

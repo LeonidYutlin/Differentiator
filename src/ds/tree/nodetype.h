@@ -84,6 +84,8 @@ double applyOperation(OpType type, double a, double b = NAN);
 //Quick node initializers (used in io and diff)
 #define NUM_(i) \
         nodeAlloc((NodeUnit){.type = NUM_TYPE, .value = {.num = i}})
+#define VAR_(i) \
+        nodeAlloc((NodeUnit){.type = VAR_TYPE, .value = {.var = i}})
 #define ADD_(l, r) \
         nodeAlloc({OP_TYPE, OP_ADD}, NULL, l, r)
 #define SUB_(l, r) \

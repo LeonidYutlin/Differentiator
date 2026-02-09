@@ -19,31 +19,28 @@ int main() {
   size_t bufferSize = 0;
   if (readBufferFromFile(f, &buffer, &bufferSize))
     return 1;
+  
+  Context ctx = {0};
+  contextInit(&ctx, 32);
+  openTexFile(&ctx);
 
-  TreeNode* tree = parseFormula(buffer);
+  TreeNode* tree = parseFormula(buffer, ctx.vars);
  
   FILE* log = openHtmlLogFile();
   if (!log)
     return 1;
 
-  Context ctx = {0};
-  contextInit(&ctx, 32);
-  openTexFile(&ctx);
-
   fclose(f);
   nodeDump(log, ctx.vars, tree, "<b3>Read tree</b3>");
   free(buffer);
-  fclose(log);
-  // treeToTex(&ctx, tree);
-  // TreeNode* diffTreeX = differentiate(&ctx, tree->rootNode, "xanr");
-  // nodeDump(log, ctx.vars, diffTreeX, "<b3> tree after diff </b3>");
-  // nodeToTex(&ctx, diffTreeX);
-  // TreeNode* diffTreeY = differentiate(&ctx, tree->rootNode, "\\varepsilon");
-  // nodeDump(log, ctx.vars, diffTreeY, "<b3> tree after diff </b3>");
-  // nodeToTex(&ctx, diffTreeY);
-  //
+  nodeToTex(&ctx, tree);
+  TreeNode* diffTreeX = differentiate(&ctx, tree, "x");
+  nodeDump(log, ctx.vars, diffTreeX, "<b3> tree after diff </b3>");
+  nodeToTex(&ctx, diffTreeX);
 
+  fclose(log);
   nodeDestroy(tree, true);
+  nodeDestroy(diffTreeX, true);
   contextDestroy(&ctx);
   return 0;
 

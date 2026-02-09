@@ -1,6 +1,8 @@
 #include "error/error.h"
 #include "misc/util.h"
 
+#undef prettyError
+
 static const ErrorInfo ERRORS[] = {
   #define X(enm, mod, shDescr, descr)                                            \
     [enm] = {.error = enm,                                                       \
@@ -37,6 +39,29 @@ const ErrorModuleInfo* parseErrorModule(ErrorModule m) {
   return (m < 0 || (size_t)m >= ERROR_MODULES_SIZE)
          ? NULL
          : &ERROR_MODULES[m];
+}
+
+void prettyError(FILE* sink, Error error, const char* filename, int line) {
+  if (!sink ||
+      !filename)
+    return;
+
+  fprintf(sink, "%s:%d [ERROR]: ", filename, line);
+  const ErrorInfo* err = parseError(error);
+  if (!err) {
+    ErrorInfo unknown = {0};
+    fprintf(sink, 
+            "%s (error code = %d): %s\n", 
+            unknown.str,
+            error,
+            unknown.desc);
+  } else {
+    fprintf(sink, 
+            "%s (error code = %d): %s\n", 
+            err->str,
+            error,
+            err->desc);
+  }
 }
 
 Error dumpErrors(FILE* file) {
