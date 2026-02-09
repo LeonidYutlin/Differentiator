@@ -1,7 +1,8 @@
 #include "ds/tree/tree.h"
 #include "ds/tree/dump/dump.h"
 #include "diff/derivative.h"
-#include "diff/io.h"
+#include "diff/io/io.h"
+#include "diff/io/parse.h"
 #include "diff/context.h"
 
 //TODO: adapt eval for trees !
@@ -42,7 +43,11 @@ int main() {
   // nodeToTex(&ctx, diffTreeY);
   //
 
+  nodeDestroy(tree, true);
+  contextDestroy(&ctx);
   return 0;
+
+
   //dumpErrors(stdout);
   //
   // FILE* log = openHtmlLogFile();

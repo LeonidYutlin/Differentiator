@@ -1,6 +1,6 @@
 #include <string.h>
 #include "diff/context.h"
-#include "diff/io.h"
+#include "diff/io/io.h"
 
 static Variable* findVarHashed(Variables* vars, const char* varStr, 
                                ulong hash, Error* status = NULL, 

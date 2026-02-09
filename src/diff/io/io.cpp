@@ -1,5 +1,5 @@
 #include "ds/tree/tree.h"
-#include "diff/io.h"
+#include "diff/io/io.h"
 #include "misc/util.h"
 #include "misc/quotes.h"
 #include <cctype>
@@ -12,11 +12,6 @@ static Error nodeToTexTraverse(Context* ctx, TreeNode* node,
                                bool suppressBrackets = false, 
                                bool suppressNewline = false);
 static bool compareParentPriority(TreeNode* node);
-
-static TreeNode* getE(const char* buf, size_t* p);
-static TreeNode* getT(const char* buf, size_t* p);
-static TreeNode* getP(const char* buf, size_t* p);
-static TreeNode* getN(const char* buf, size_t* p);
 
 static TreeNode* nodeReadRecursion(Variables* vars, 
                                    char* buf, size_t bufSize, size_t* p,
@@ -267,107 +262,6 @@ static Error nodeToTexTraverse(Context* ctx, TreeNode* node, size_t* writtenCoun
 
 #undef ADD_TO_COUNT
 
-#define SYNTAX_ERROR(commentary, expectedCharStr, p)              \
-  {                                                                 \
-  fprintf(stderr,                                                   \
-          "[ERROR]: Failed to read given mathematical expression\n" \
-          "\tAt pition %lu\n"                                     \
-          "\t%s\n"                                                  \
-          "\tExpected char: %s\n"                                   \
-          "\tString snippet:\n"                                     \
-          "\t%.10s...\n"                                            \
-          "\t^\n",                                                  \
-          p,                                                      \
-          commentary,                                               \
-          expectedCharStr,                                          \
-          buf + p);                                               \
-  return NULL;                                                      \
-  }
-
-#define SKIP_WHITESPACE        \
-  while (isspace(buf[*p])) { \
-      (*p)++;                \
-  }
-
-TreeNode* parseFormula(const char* buf) {
-  size_t p = 0;
-  TreeNode* val = getE(buf, &p);
-  while (isspace(buf[p])) p++;
-  if (buf[p] != '\0')
-    SYNTAX_ERROR("Illegal character at the end of given expression", "NULL character ('\\0')", p);
-  p++;
-  return val;
-}
-
-static TreeNode* getE(const char* buf, size_t* p) {
-  SKIP_WHITESPACE
-  TreeNode* val = getT(buf, p);
-  while (buf[*p] == '+' ||
-         buf[*p] == '-') {
-    char op = buf[*p];
-    (*p)++;
-    TreeNode* val2 = getT(buf, p);
-    if (op == '+')
-      val = ADD_(val, val2);
-    else
-      val = SUB_(val, val2);
-  }
-  SKIP_WHITESPACE
-  return val;
-}
-
-static TreeNode* getT(const char* buf, size_t* p) {
-  SKIP_WHITESPACE
-  TreeNode* val = getP(buf, p);
-  while (buf[*p] == '*' ||
-         buf[*p] == '/') {
-    char op = buf[*p];
-    (*p)++;
-    TreeNode* val2 = getP(buf, p);
-    if (op == '*')
-      val = MUL_(val, val2);
-    else
-      val = DIV_(val, val2);
-  }
-  SKIP_WHITESPACE
-  return val;
-}
-
-static TreeNode* getP(const char* buf, size_t* p) {
-  SKIP_WHITESPACE
-  while (buf[*p] == '(') {
-    (*p)++;
-    SKIP_WHITESPACE
-    TreeNode* val = getE(buf, p);
-    SKIP_WHITESPACE
-    if (buf[*p] == ')')
-      (*p)++;
-    else
-      SYNTAX_ERROR("Illegal character at the end of a primary expression", ")", *p);
-    return val;
-  }
-  SKIP_WHITESPACE
-  return getN(buf, p);
-}
-
-
-static TreeNode* getN(const char* buf, size_t* p) {
-  SKIP_WHITESPACE
-  double val = 0;
-  size_t oldP = *p;
-  while (buf[*p] >= '0' &&
-         buf[*p] <= '9') {
-      val = val * 10 + (buf[*p] - '0');
-      (*p)++;
-  }
-  if (oldP == *p)
-    SYNTAX_ERROR("Illegal char at the start of a number", "[0-9]", *p);
-  SKIP_WHITESPACE
-  return NUM_(val);
-}
-
-#undef SYNTAX_ERROR
-
 TreeNode* nodeRead(FILE* f, Variables* vars, Error* status, size_t* nodeCount) {
   if (!f ||
       !vars)
@@ -424,6 +318,11 @@ TreeRoot* treeRead(FILE* f, Variables* vars, Error* status) {
           commentary,                                      \
           buf + *p);                                     \
   RETURN_WITH_STATUS(FailReadNode, NULL);                  \
+  }
+
+#define SKIP_WHITESPACE      \
+  while (isspace(buf[*p])) { \
+      (*p)++;                \
   }
 
 static TreeNode* nodeReadRecursion(Variables* vars,

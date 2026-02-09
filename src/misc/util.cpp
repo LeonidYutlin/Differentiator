@@ -54,7 +54,7 @@ Error readBufferFromFile(FILE* file,
   struct stat fileStats = {0};
   fstat(file->_fileno, &fileStats);
   size_t bufferSize = (size_t) fileStats.st_size;
-  char* buffer = (char*) calloc(bufferSize, sizeof(char));
+  char* buffer = (char*) calloc(bufferSize + 1, sizeof(char)); // + 1 for NULL terminating character
   if (!buffer)
     return FailMemoryAllocation;
 

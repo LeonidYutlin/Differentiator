@@ -11,9 +11,6 @@ TreeNode* differentiationStepToTex(Context* context, const char* var,
                                    TreeNode* before, TreeNode* after,
                                    Error* status = NULL);
 
-//Dumps errors in stderr...
-TreeNode* parseFormula(const char* expression);
-
 //not context because file isnt the tex output file but instead a "source" file
 TreeNode* nodeRead(FILE* file, Variables* vars, Error* status = NULL, size_t* nodeCount = NULL);
 TreeRoot* treeRead(FILE* file, Variables* vars, Error* status = NULL);
