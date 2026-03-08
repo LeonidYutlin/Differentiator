@@ -1,17 +1,18 @@
-include_flags := -I src/
-define_flags  := -D _DEBUG -D DISABLE_NEWLINES 
+COMPILER      := g++
+INCLUDE_FLAGS := -I src/
+DEFINE_FLAGS  := -D _DEBUG -D DISABLE_NEWLINES 
 
-artifact_path := build
-binary_path   := bin
+ARTIFACT_PATH := build
+BINARY_PATH   := bin
 
-program_name  := $(binary_path)/diff
+PROGRAM_NAME  := $(BINARY_PATH)/diff
 
-raw_objects := queue.o nodetype.o io.o parse.o \
+RAW_OBJECTS := queue.o nodetype.o io.o parse.o \
 				 		   util.o derivative.o tree.o \
 					 		 dump.o main.o node.o error.o context.o
-objects     := $(addprefix $(artifact_path)/, $(raw_objects))
+OBJECTS     := $(addprefix $(ARTIFACT_PATH)/, $(RAW_OBJECTS))
 
-c_flags := -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++                   \
+C_FLAGS := -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++                   \
 				   -Waggressive-loop-optimizations -Wc++14-compat                 \
 				   -Wmissing-declarations -Wcast-align -Wcast-qual                \
 				   -Wchar-subscripts -Wconditionally-supported                    \
@@ -30,7 +31,7 @@ c_flags := -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++                   \
 				   -Wno-old-style-cast -Wno-varargs -Wstack-protector             \
 				   -fcheck-new -fsized-deallocation -fstack-protector             \
 				   -fstrict-overflow -flto-odr-type-merging                       \
-				   -fno-omit-frame-pointer -Wlarger-than=65536                    \
+				   -fno-omit-frame-pointer -Wlarger-than=64000                    \
 				   -Wstack-usage=8192 -pie -fPIE -Werror=vla                      \
 				   -fsanitize=address,alignment,bool,bounds,enum,$\
 				   float-cast-overflow,float-divide-by-zero,$\
@@ -39,29 +40,29 @@ c_flags := -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++                   \
 				   shift,signed-integer-overflow,undefined,$\
 				   unreachable,vla-bound,vptr
 
-$(program_name): $(objects)
-	g++ $(include_flags) $(c_flags) $(objects) -o $@
+$(PROGRAM_NAME): $(OBJECTS)
+	$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $(OBJECTS) -o $@
 
-$(artifact_path)/queue.o:      src/ds/queue/queue.cpp
-$(artifact_path)/nodetype.o:   src/ds/tree/nodetype.cpp
-$(artifact_path)/io.o:         src/diff/io/io.cpp
-$(artifact_path)/parse.o:      src/diff/io/parse.cpp
-$(artifact_path)/util.o:       src/misc/util.cpp
-$(artifact_path)/derivative.o: src/diff/derivative.cpp
-$(artifact_path)/tree.o:       src/ds/tree/tree.cpp
-$(artifact_path)/dump.o:       src/ds/tree/dump/dump.cpp
-$(artifact_path)/main.o:       src/main.cpp
-$(artifact_path)/node.o:       src/ds/tree/node.cpp
-$(artifact_path)/error.o:      src/error/error.cpp
-$(artifact_path)/context.o:    src/diff/context.cpp
+$(ARTIFACT_PATH)/queue.o:      src/ds/queue/queue.cpp
+$(ARTIFACT_PATH)/nodetype.o:   src/ds/tree/nodetype.cpp
+$(ARTIFACT_PATH)/io.o:         src/diff/io/io.cpp
+$(ARTIFACT_PATH)/parse.o:      src/diff/io/parse.cpp
+$(ARTIFACT_PATH)/util.o:       src/misc/util.cpp
+$(ARTIFACT_PATH)/derivative.o: src/diff/derivative.cpp
+$(ARTIFACT_PATH)/tree.o:       src/ds/tree/tree.cpp
+$(ARTIFACT_PATH)/dump.o:       src/ds/tree/dump/dump.cpp
+$(ARTIFACT_PATH)/main.o:       src/main.cpp
+$(ARTIFACT_PATH)/node.o:       src/ds/tree/node.cpp
+$(ARTIFACT_PATH)/error.o:      src/error/error.cpp
+$(ARTIFACT_PATH)/context.o:    src/diff/context.cpp
 
 %.o:
-	g++ -c $(define_flags) $(include_flags) $(c_flags) $< -o $@
+	$(COMPILER) -c $(DEFINE_FLAGS) $(INCLUDE_FLAGS) $(C_FLAGS) $(OPTIONALS) $< -o $@
 
 .PHONY: ensure_directories_exist clean
 
 ensure_directories_exist:
-	mkdir -p $(binary_path) $(artifact_path)
+	mkdir -p $(BINARY_PATH) $(ARTIFACT_PATH)
 
 clean:
-	rm -f $(objects) $(program_name) 
+	rm -f $(OBJECTS) $(PROGRAM_NAME) 
