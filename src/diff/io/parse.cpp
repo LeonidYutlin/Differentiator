@@ -1,5 +1,5 @@
-#include "ds/tree/tree.h"
-#include "parse.h"
+#include "diff/io/parse.h"
+#include "misc/util.h"
 #include <ctype.h>
 
 static TreeNode* getE(const char* buf, size_t* p, Variables* vars);

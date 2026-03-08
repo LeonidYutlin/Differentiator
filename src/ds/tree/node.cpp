@@ -1,7 +1,6 @@
 #include "ds/tree/tree.h"
 #include "misc/util.h"
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
 #include <assert.h>
 

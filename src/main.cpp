@@ -3,6 +3,7 @@
 #include "diff/io/io.h"
 #include "diff/io/parse.h"
 #include "diff/context.h"
+#include "misc/util.h"
 
 //TODO: adapt eval for trees (arcsin, sin, log...)!
 //TODO: calculation with given var values

@@ -1,4 +1,5 @@
 #include "diff/derivative.h"
+#include "diff/io/io.h"
 #include <assert.h>
 #include <math.h>
 
