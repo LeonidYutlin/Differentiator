@@ -40,7 +40,7 @@ walkUp() {
 #actual script
 LOG_PATH=".log/.last-build.txt"
 SAVED_DIR=$(pwd)
-walkUp ".git"
+walkUp "src"
 rm -f $LOG_PATH
 build |& tee $LOG_PATH
 cd $SAVED_DIR

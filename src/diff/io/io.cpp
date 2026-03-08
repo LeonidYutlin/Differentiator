@@ -358,6 +358,12 @@ static TreeNode* nodeReadRecursion(Variables* vars,
       *p += (size_t)charReadN;
     } else {
       char valStr[MAX_VALUE_STRING_LENGTH] = {0};
+      //char* valBuf = (char*)calloc(BASE_VALUE_BUF_LEN, sizeof(char));
+      //if (!valBuf)
+      //  DUMP_ERROR_RETURN("Memory allocation failed");
+      //while (...)
+      //
+      //OVERFLOW, bad sscanf - use smth else 
       if (sscanf(buf + *p, "%s%n", 
                  valStr, &charReadN) != 1)
         DUMP_ERROR_RETURN("No valid var/op value in node");

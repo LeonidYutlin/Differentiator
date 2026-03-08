@@ -1,6 +1,11 @@
 #ifndef ERROR_MODULE_GENERIC
 #define ERROR_MODULE_GENERIC
 
+#define GENERIC_ERROR_MODULE()   \ 
+  X(GenericError,                \                          
+    "Generic Errors",            \
+    "Common errors across the whole project")
+
 #define GENERIC_ERROR_LIST()                                                       \
   X(OK,                                                                            \
     GenericError,                                                                  \

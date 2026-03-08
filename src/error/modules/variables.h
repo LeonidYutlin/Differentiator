@@ -1,7 +1,12 @@
 #ifndef ERROR_MODULE_VAR_TABLE
 #define ERROR_MODULE_VAR_TABLE
 
-#define VARIABLES_STATUS_LIST()                                               \
+#define VARIABLES_ERROR_MODULE()                          \
+  X(VariablesError,                                       \
+    "Variables Errors",                                   \
+    "Errors related to dyn array of variables - Variables")
+
+#define VARIABLES_ERROR_LIST()                                                \
   X(BadCount,                                                                 \
     VariablesError,                                                           \
     "vars->count > vars->capacity",                                           \

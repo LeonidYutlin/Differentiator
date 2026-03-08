@@ -1,7 +1,12 @@
 #ifndef ERROR_MODULE_TREE
 #define ERROR_MODULE_TREE
 
-#define TREE_STATUS_LIST()                                     \
+#define TREE_ERROR_MODULE()                               \
+  X(TreeError,                                            \
+    "Tree/Node Errors",                                   \
+    "Errors related to TreeRoot/TreeNode datastructures") \ 
+
+#define TREE_ERROR_LIST()                                      \
   X(UninitializedTree,                                         \
     TreeError,                                                 \
     "Tree is uninitialized",                                   \

@@ -139,6 +139,10 @@ static TreeNode* getV(const char* buf, size_t* p, Variables* vars) {
   if (oldP == *p)
     return NULL;
   varName[MAX_VALUE_STRING_LENGTH - 1] = '\0'; //ensure it is NULL-terminated
+  //int opType = getOpType(varName);
+  //if (opType >= 0) {
+    //return op type with args...
+  //}
   Error err = OK;
   size_t index = regVar(vars, varName, &err);
   if (err != OK &&
