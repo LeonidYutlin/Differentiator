@@ -1,9 +1,8 @@
-#include "ds/tree/dump/dump.h"
 #include "diff/derivative.h"
 #include "diff/io/io.h"
 #include "diff/io/parse.h"
 #include "diff/context.h"
-#include "misc/util.h"
+#include "ds/tree/dump/dump.h"
 
 //TODO: adapt eval for trees (arcsin, sin, log...)!
 //TODO: calculation with given var values
@@ -14,7 +13,7 @@ int main() {
   FILE* f = fopen(".test/parse_test.txt", "r");
   if (!f)
     return 1;
-
+  
   char* buffer = NULL;
   size_t bufferSize = 0;
   if (readBufferFromFile(f, &buffer, &bufferSize))
