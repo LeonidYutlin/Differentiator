@@ -7,10 +7,12 @@ BINARY_PATH   := bin
 
 PROGRAM_NAME  := $(BINARY_PATH)/diff
 
-RAW_OBJECTS := queue.o nodetype.o io.o parse.o \
-				 		   util.o derivative.o tree.o \
-					 		 dump.o main.o node.o error.o context.o
-OBJECTS     := $(addprefix $(ARTIFACT_PATH)/, $(RAW_OBJECTS))
+define to_object
+	$(patsubst %.cpp, $(ARTIFACT_PATH)/%.o, $(notdir $(1)))
+endef
+
+SOURCES := $(shell find src/ -type f -name '*.cpp')
+OBJECTS := $(call to_object,$(SOURCES))
 
 C_FLAGS := -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++                   \
 				   -Waggressive-loop-optimizations -Wc++14-compat                 \
@@ -41,23 +43,18 @@ C_FLAGS := -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++                   \
 				   unreachable,vla-bound,vptr
 
 $(PROGRAM_NAME): $(OBJECTS)
-	$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $(OBJECTS) -o $@
+	@echo "Linking the project together"
+	@$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $^ -o $@
 
-$(ARTIFACT_PATH)/queue.o:      src/ds/queue/queue.cpp
-$(ARTIFACT_PATH)/nodetype.o:   src/ds/tree/nodetype.cpp
-$(ARTIFACT_PATH)/io.o:         src/diff/io/io.cpp
-$(ARTIFACT_PATH)/parse.o:      src/diff/io/parse.cpp
-$(ARTIFACT_PATH)/util.o:       src/misc/util.cpp
-$(ARTIFACT_PATH)/derivative.o: src/diff/derivative.cpp
-$(ARTIFACT_PATH)/tree.o:       src/ds/tree/tree.cpp
-$(ARTIFACT_PATH)/dump.o:       src/ds/tree/dump/dump.cpp
-$(ARTIFACT_PATH)/main.o:       src/main.cpp
-$(ARTIFACT_PATH)/node.o:       src/ds/tree/node.cpp
-$(ARTIFACT_PATH)/error.o:      src/error/error.cpp
-$(ARTIFACT_PATH)/context.o:    src/diff/context.cpp
+define declare_recipe
+$(call to_object,$(1)): $(1)
+endef
+
+$(foreach src,$(SOURCES),$(eval $(strip $(call declare_recipe,$(src)))))
 
 %.o:
-	$(COMPILER) -c $(DEFINE_FLAGS) $(INCLUDE_FLAGS) $(C_FLAGS) $(OPTIONALS) $< -o $@
+	@echo "Compiling" $<
+	@$(COMPILER) -c $(DEFINE_FLAGS) $(INCLUDE_FLAGS) $(C_FLAGS) $< -o $@
 
 .PHONY: ensure_directories_exist clean
 
