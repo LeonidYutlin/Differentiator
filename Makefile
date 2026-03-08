@@ -43,7 +43,7 @@ C_FLAGS := -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++                   \
 				   unreachable,vla-bound,vptr
 
 $(PROGRAM_NAME): $(OBJECTS)
-	@echo "Linking the project together"
+	@echo -e "•\e[36mLinking the project together\e[0m"
 	@$(COMPILER) $(INCLUDE_FLAGS) $(C_FLAGS) $^ -o $@
 
 define declare_recipe
@@ -53,7 +53,7 @@ endef
 $(foreach src,$(SOURCES),$(eval $(strip $(call declare_recipe,$(src)))))
 
 %.o:
-	@echo "Compiling" $<
+	@echo -e "•\e[36mCompiling\e[0m" $<
 	@$(COMPILER) -c $(DEFINE_FLAGS) $(INCLUDE_FLAGS) $(C_FLAGS) $< -o $@
 
 .PHONY: ensure_directories_exist clean
