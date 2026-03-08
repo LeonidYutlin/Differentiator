@@ -4,7 +4,7 @@
 #define TREE_ERROR_MODULE()                               \
   X(TreeError,                                            \
     "Tree/Node Errors",                                   \
-    "Errors related to TreeRoot/TreeNode datastructures") \ 
+    "Errors related to TreeRoot/TreeNode datastructures")
 
 #define TREE_ERROR_LIST()                                      \
   X(UninitializedTree,                                         \

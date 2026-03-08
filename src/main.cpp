@@ -1,4 +1,3 @@
-#include "ds/tree/tree.h"
 #include "ds/tree/dump/dump.h"
 #include "diff/derivative.h"
 #include "diff/io/io.h"
@@ -42,6 +41,7 @@ int main() {
   fclose(log);
   nodeDestroy(tree, true);
   nodeDestroy(diffTreeX, true);
+  contextDestroy(&ctx);
   return 0;
 
   // //Examples of using callbacks! Yay

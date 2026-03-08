@@ -5,5 +5,7 @@
 *.png
 *.svg
 *.txt
-bin/*
-!bin/*.*
+bin
+build
+compile_commands.json
+.cache
