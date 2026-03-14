@@ -9,3 +9,4 @@ bin
 build
 compile_commands.json
 .cache
+src/misc/quotes.h
