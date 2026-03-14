@@ -7,7 +7,7 @@ static const char* QUOTES[] = {
   "Aaaaand what has went wrong now?",
   "None of these words are in the Bible",
   "Et tu, Brute?",
-  "Appledog",
+  "@ppl3D0g",
   "Is my tree gonna make it? Prolly not",
   "OUR FOOD KEEPS BLOWING U-",
   "One must imagine treeDump happy...",
@@ -27,7 +27,6 @@ static const char* QUOTES[] = {
   "I probably should not be writing this instead of the actual code",
   "She data on my structures till i linearize",
   "They say I've got a green thumb",
-  "The fares are... bountiful?",
   "It isn't the first time an artist was eaten",
 };
 
